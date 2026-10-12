@@ -1,0 +1,29 @@
+# Source documents are never committed
+*.pdf
+
+# Secrets / local environment
+.env
+.env.*
+!.env.example
+secrets/
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code: local-only settings and personal tooling
+.claude/settings.local.json
+.claude/skills/
+.claude/commands/
