@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
@@ -27,15 +29,15 @@ import org.springframework.test.web.servlet.client.RestTestClient;
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import({TestcontainersConfiguration.class, LinkCreationCollisionIT.ScriptedGeneratorConfig.class})
-@TestPropertySource(
-    properties = {
-      "app.api-key=test-api-key-for-link-creation-collision-it",
-      "app.public-base-url=http://localhost:8080"
-    })
+@TestPropertySource(properties = "app.public-base-url=http://localhost:8080")
 class LinkCreationCollisionIT {
 
-  private static final String API_KEY = "test-api-key-for-link-creation-collision-it";
   private static final String EXHAUSTION_METRIC = "links.code.generation.exhausted";
+
+  @DynamicPropertySource
+  static void apiKey(DynamicPropertyRegistry registry) {
+    TestApiKey.register(registry);
+  }
 
   @LocalServerPort int serverPort;
 
@@ -66,11 +68,7 @@ class LinkCreationCollisionIT {
     double before = exhaustionCount();
 
     generator.willAlwaysReturn("Taken001");
-    create()
-        .expectStatus()
-        .isEqualTo(503)
-        .expectHeader()
-        .contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON);
+    ErrorContractIT.assertProblem(create(), 503);
 
     assertThat(exhaustionCount()).isEqualTo(before + 1);
   }
@@ -78,7 +76,7 @@ class LinkCreationCollisionIT {
   private RestTestClient.ResponseSpec create() {
     return app.post()
         .uri("/api/v1/links")
-        .header("X-API-Key", API_KEY)
+        .header("X-API-Key", TestApiKey.VALUE)
         .contentType(MediaType.APPLICATION_JSON)
         .body("{\"destination\":\"https://example.com/some/path\"}")
         .exchange();

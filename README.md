@@ -4,9 +4,9 @@ A URL shortener service (Java 21, Spring Boot, PostgreSQL) built through an engi
 AI-assisted workflow. Requirements, decomposition, and progress are tracked in this repository's
 GitHub Issues and Pull Requests.
 
-> Work in progress. The service creates short links and redirects them. Validation and
-> authentication are minimal for now; hardening and the remaining features arrive slice by
-> slice (see the issues).
+> Work in progress. The service creates short links (API key required) and redirects them, and
+> every error is an RFC 7807 problem response. Destination validation is minimal for now; it and
+> the remaining features arrive slice by slice (see the issues).
 
 ## Run with Docker
 
@@ -69,8 +69,13 @@ macOS the Maven wrapper also needs `unzip` (it verifies the checksum of the Mave
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/urlshortener
 export SPRING_DATASOURCE_USERNAME=urlshortener
 export SPRING_DATASOURCE_PASSWORD=<your password>
+export APP_API_KEY=<a key of at least 32 characters>
 ./mvnw spring-boot:run
 ```
+
+The app refuses to start if `APP_API_KEY` is missing, shorter than 32 characters, or the published
+demo key (which is only accepted under the `local` profile that compose sets). Clients send the key
+in the `X-API-Key` header.
 
 On Windows, use `mvnw.cmd` and set the variables with `$env:NAME = "value"` (PowerShell).
 Readiness is then at `http://localhost:8081/actuator/health/readiness`.

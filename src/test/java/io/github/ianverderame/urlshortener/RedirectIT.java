@@ -11,6 +11,8 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
@@ -21,14 +23,13 @@ import org.springframework.test.web.servlet.client.RestTestClient;
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
-@TestPropertySource(
-    properties = {
-      "app.api-key=test-api-key-for-redirect-it",
-      "app.public-base-url=http://localhost:8080"
-    })
+@TestPropertySource(properties = "app.public-base-url=http://localhost:8080")
 class RedirectIT {
 
-  private static final String API_KEY = "test-api-key-for-redirect-it";
+  @DynamicPropertySource
+  static void apiKey(DynamicPropertyRegistry registry) {
+    TestApiKey.register(registry);
+  }
 
   @LocalServerPort int serverPort;
 
@@ -46,7 +47,7 @@ class RedirectIT {
 
     app.post()
         .uri("/api/v1/links")
-        .header("X-API-Key", API_KEY)
+        .header("X-API-Key", TestApiKey.VALUE)
         .contentType(MediaType.APPLICATION_JSON)
         .body("{\"destination\":\"" + destination + "\"}")
         .exchange()
@@ -92,7 +93,7 @@ class RedirectIT {
     AtomicReference<String> code = new AtomicReference<>();
     app.post()
         .uri("/api/v1/links")
-        .header("X-API-Key", API_KEY)
+        .header("X-API-Key", TestApiKey.VALUE)
         .contentType(MediaType.APPLICATION_JSON)
         .body("{\"destination\":\"" + destination + "\"}")
         .exchange()

@@ -1,9 +1,7 @@
 package io.github.ianverderame.urlshortener;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,15 +26,5 @@ class LinkController {
         new LinkResponse(
             link.code(), publicBaseUrl.shortUrl(link.code()), link.destination(), link.createdAt());
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
-  }
-
-  @ExceptionHandler
-  ProblemDetail invalidDestination(InvalidDestinationException e) {
-    return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-  }
-
-  @ExceptionHandler
-  ProblemDetail codeGenerationExhausted(CodeGenerationExhaustedException e) {
-    return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
   }
 }

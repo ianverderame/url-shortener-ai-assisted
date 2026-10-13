@@ -7,12 +7,19 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 /** Issue #4: the OpenAPI description and interactive docs are served on the application port. */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
 class ApiDocsIT {
+
+  @DynamicPropertySource
+  static void apiKey(DynamicPropertyRegistry registry) {
+    TestApiKey.register(registry);
+  }
 
   @LocalServerPort int serverPort;
 
@@ -35,6 +42,19 @@ class ApiDocsIT {
         .exists()
         .jsonPath("$.paths['/{code}'].get")
         .exists();
+  }
+
+  // The error controller is plumbing for the error contract, not part of the API.
+  @Test
+  void theOpenApiDescriptionDoesNotListTheErrorEndpoint() {
+    app.get()
+        .uri("/v3/api-docs")
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$.paths['/error']")
+        .doesNotExist();
   }
 
   @Test

@@ -18,7 +18,7 @@ class RedirectController {
   }
 
   @GetMapping("/{code:[0-9A-Za-z]{8}}")
-  ResponseEntity<Void> redirect(@PathVariable String code) {
+  ResponseEntity<?> redirect(@PathVariable String code) {
     return linkService
         .resolve(code)
         .map(
@@ -26,7 +26,12 @@ class RedirectController {
                 ResponseEntity.status(HttpStatus.FOUND)
                     .location(URI.create(link.destination()))
                     .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .<Void>build())
-        .orElseGet(() -> ResponseEntity.notFound().build());
+                    .<Object>build())
+        .orElseGet(
+            () ->
+                ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(
+                        ProblemDetailsAdvice.problem(
+                            HttpStatus.NOT_FOUND, "No link has this code.")));
   }
 }
