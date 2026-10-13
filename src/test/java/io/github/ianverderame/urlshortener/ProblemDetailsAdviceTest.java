@@ -3,7 +3,9 @@ package io.github.ianverderame.urlshortener;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -72,6 +74,28 @@ class ProblemDetailsAdviceTest {
         advice.unauthenticated(new BadCredentialsException("key did not match"));
 
     assertProblem(problem, HttpStatus.UNAUTHORIZED, "A valid X-API-Key header is required.");
+  }
+
+  @Test
+  void aMalformedParameterIsABadRequestNamingTheParameterButNotItsValue() {
+    TypeMismatchException mismatch =
+        new TypeMismatchException("https://example.com/secret", LocalDate.class);
+    mismatch.initPropertyName("from");
+
+    ResponseEntity<Object> response =
+        advice.handleTypeMismatch(
+            mismatch,
+            new HttpHeaders(),
+            HttpStatus.BAD_REQUEST,
+            new ServletWebRequest(new MockHttpServletRequest()));
+
+    assertThat(response).isNotNull();
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(response.getBody()).isInstanceOf(ProblemDetail.class);
+    assertProblem(
+        (ProblemDetail) response.getBody(),
+        HttpStatus.BAD_REQUEST,
+        "Parameter 'from' is not valid.");
   }
 
   @Test

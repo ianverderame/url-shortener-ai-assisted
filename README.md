@@ -61,10 +61,10 @@ curl -i "http://127.0.0.1:8080/api/v1/links/{code}/stats?from=2026-10-01&to=2026
 
 `from` and `to` are UTC dates, both inclusive. Without them you get the 30 days ending today
 (UTC). The response has the range `total` and one entry per day in `days`, oldest first, with `0`
-for days without clicks. A range longer than 366 days, `from` after `to`, or `to` after today is a
-`400`; an unknown code is a `404`. Clicks are recorded off the redirect path, so one can take a
-moment to appear, and under heavy load or a database outage a click can be dropped (counted, never
-blocking the redirect).
+for days without clicks. A range longer than 366 days, `from` after `to`, `to` after today, or a
+date before `0001-01-01` is a `400`; an unknown code is a `404`. Clicks are recorded off the
+redirect path, so one can take a moment to appear, and under heavy load or a database outage a
+click can be dropped (counted, never blocking the redirect).
 
 ### Destination rules
 

@@ -23,6 +23,11 @@ class LinkStatsService {
   /** The longest allowed range, counting both ends. */
   private static final int MAX_DAYS = 366;
 
+  /** The earliest accepted date; anything earlier is a client error, never date overflow. */
+  private static final LocalDate EARLIEST = LocalDate.of(1, 1, 1);
+
+  private static final String TOO_EARLY = "Dates must not be before 0001-01-01.";
+
   private final LinkRepository links;
   private final ClickStatsRepository clickStats;
   private final Clock clock;
@@ -37,6 +42,9 @@ class LinkStatsService {
   LinkStats stats(String code, LocalDate from, LocalDate to) {
     LocalDate today = LocalDate.ofInstant(clock.instant(), ZoneOffset.UTC);
     LocalDate end = to != null ? to : today;
+    if (end.isBefore(EARLIEST)) {
+      throw new InvalidStatsRangeException(TOO_EARLY);
+    }
     LocalDate start = from != null ? from : end.minusDays(DEFAULT_DAYS - 1);
     validate(start, end, today);
 
@@ -54,6 +62,9 @@ class LinkStatsService {
   }
 
   private static void validate(LocalDate start, LocalDate end, LocalDate today) {
+    if (start.isBefore(EARLIEST)) {
+      throw new InvalidStatsRangeException(TOO_EARLY);
+    }
     if (end.isAfter(today)) {
       throw new InvalidStatsRangeException("'to' must not be after today (UTC).");
     }

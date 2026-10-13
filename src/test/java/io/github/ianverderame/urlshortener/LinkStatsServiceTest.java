@@ -143,6 +143,33 @@ class LinkStatsServiceTest {
   }
 
   @Test
+  void theEarliestAcceptedDateIsTheFirstOfYearOne() {
+    links.store(CODE);
+    LocalDate first = LocalDate.of(1, 1, 1);
+
+    assertThat(service().stats(CODE, first, first.plusDays(4)).days()).hasSize(5);
+  }
+
+  @Test
+  void aFromBeforeYearOneIsRejected() {
+    links.store(CODE);
+    LocalDate first = LocalDate.of(1, 1, 1);
+
+    assertThatExceptionOfType(InvalidStatsRangeException.class)
+        .isThrownBy(() -> service().stats(CODE, first.minusDays(1), first.plusDays(4)));
+  }
+
+  // A default window ending at the earliest representable date must be a 400, not an arithmetic
+  // overflow.
+  @Test
+  void aToSoEarlyThatTheDefaultFromCannotBeComputedIsRejected() {
+    links.store(CODE);
+
+    assertThatExceptionOfType(InvalidStatsRangeException.class)
+        .isThrownBy(() -> service().stats(CODE, null, LocalDate.MIN));
+  }
+
+  @Test
   void anUnknownCodeIsNotFound() {
     assertThatExceptionOfType(LinkNotFoundException.class)
         .isThrownBy(() -> service().stats("Unknown1", null, null));

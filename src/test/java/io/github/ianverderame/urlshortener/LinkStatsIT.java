@@ -1,5 +1,7 @@
 package io.github.ianverderame.urlshortener;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -148,6 +150,27 @@ class LinkStatsIT {
     ErrorContractIT.assertProblem(stats("/api/v1/links/" + code + "/stats?from=13-10-2026"), 400);
   }
 
+  // pr-reviewer finding: an extreme but well-formed date was a 500 (date arithmetic overflow).
+  @Test
+  void anExtremeDateIsABadRequest() {
+    String code = createLink();
+    ErrorContractIT.assertProblem(
+        stats("/api/v1/links/" + code + "/stats?to=-999999999-01-01"), 400);
+  }
+
+  // Rule 4: a malformed parameter is not echoed, even when it carries a URL.
+  @Test
+  void aMalformedParameterIsNotEchoedInTheProblem() {
+    String code = createLink();
+    String value = "https://example.com/secret?token=abc";
+
+    stats("/api/v1/links/" + code + "/stats?from={from}", value)
+        .expectStatus()
+        .isBadRequest()
+        .expectBody(String.class)
+        .value(body -> assertThat(body).doesNotContain("example.com").doesNotContain("token"));
+  }
+
   @Test
   void anUnknownCodeIsNotFound() {
     ErrorContractIT.assertProblem(stats("/api/v1/links/Zz9Zz9Zz/stats"), 404);
@@ -160,8 +183,8 @@ class LinkStatsIT {
         app.get().uri("/api/v1/links/" + code + "/stats").exchange(), 401);
   }
 
-  private RestTestClient.ResponseSpec stats(String uri) {
-    return app.get().uri(uri).header("X-API-Key", TestApiKey.VALUE).exchange();
+  private RestTestClient.ResponseSpec stats(String uri, Object... uriVariables) {
+    return app.get().uri(uri, uriVariables).header("X-API-Key", TestApiKey.VALUE).exchange();
   }
 
   private void click(String code, String occurredAt) {

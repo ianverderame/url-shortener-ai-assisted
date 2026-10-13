@@ -42,8 +42,8 @@ class LinkStatsController {
   @ApiResponse(
       responseCode = "400",
       description =
-          "A date is malformed, the range spans more than 366 days, 'from' is after 'to', or"
-              + " 'to' is after today (UTC).",
+          "A date is malformed or before 0001-01-01, the range spans more than 366 days, 'from'"
+              + " is after 'to', or 'to' is after today (UTC).",
       content =
           @Content(
               mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,

@@ -12,7 +12,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Records followed links off the redirect path. The time is read on the caller's thread; the write
  * runs on a bounded executor. Delivery is at-most-once: {@link #record} never blocks or throws, and
- * each event that is not stored is counted once under {@code clicks.lost}, tagged by reason.
+ * each event lost to a full queue, a failed write (an exception, not an {@code Error}) or shutdown
+ * is counted once under {@code clicks.lost}, tagged by reason.
  */
 class ClickRecorder {
 
