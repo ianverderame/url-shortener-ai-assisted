@@ -20,6 +20,9 @@
 		     stages. -DskipTests still skips both. -->
 		<skipTests>false</skipTests>
 		<skipUTs>${skipTests}</skipUTs>
+		<!-- Shared test JVM arguments. Empty by default so `@{argLine}` in surefire and failsafe always
+		     resolves; other tooling can append to it. -->
+		<argLine/>
 	</properties>
 
 	<dependencies>
@@ -79,17 +82,34 @@
 					</compilerArgs>
 				</configuration>
 			</plugin>
+			<!-- Exposes `${org.mockito:mockito-core:jar}` so test JVMs load Mockito as an agent at
+			     startup instead of self-attaching (JEP 451; Mockito javadoc section 0.3). -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>properties</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<skipTests>${skipUTs}</skipTests>
+					<argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
 				</configuration>
 			</plugin>
 			<!-- Runs *IT classes in the verify phase; executions come from the Boot parent. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+				</configuration>
 			</plugin>
 			<!-- Formatting gate: google-java-format. `./mvnw spotless:apply` fixes, and `verify`
 			     runs the check. -->
