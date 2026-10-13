@@ -36,7 +36,7 @@ services:
     ports:
       # Loopback only: the published demo key must never be usable from the network.
       - "127.0.0.1:8080:8080"
-      - "127.0.0.1:8081:8081" # management (health) port
+      - "127.0.0.1:8081:8081" # management (health, metrics) port
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health/readiness"]
       interval: 5s

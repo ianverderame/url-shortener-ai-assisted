@@ -14,8 +14,9 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 /**
- * The link API ({@code /api/**}) requires the API key; everything else (redirects, docs, health on
- * the management port, {@code /error}) is public. Stateless: no sessions, cookies, or CSRF tokens.
+ * The link API ({@code /api/**}) requires the API key; everything else (redirects, docs, health and
+ * metrics on the management port, {@code /error}) is public. Stateless: no sessions, cookies, or
+ * CSRF tokens.
  *
  * <p>Paths are matched with {@link PathPatternRequestMatcher}, which decodes the path and drops
  * matrix parameters the way Spring MVC routing does, so no spelling of an API path skips the key
