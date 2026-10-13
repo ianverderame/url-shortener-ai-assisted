@@ -33,6 +33,11 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler
+  ProblemDetail linkNotFound(LinkNotFoundException e) {
+    return problem(HttpStatus.NOT_FOUND, e.getMessage());
+  }
+
+  @ExceptionHandler
   ProblemDetail codeGenerationExhausted(CodeGenerationExhaustedException e) {
     return problem(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
   }

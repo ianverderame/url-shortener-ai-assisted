@@ -34,9 +34,7 @@ class RedirectController {
           @Header(
               name = HttpHeaders.LOCATION,
               description = "The destination URL.",
-              schema = @Schema(type = "string", format = "uri")),
-      // No body: without this, the wildcard return type would be documented as one.
-      content = @Content)
+              schema = @Schema(type = "string", format = "uri")))
   @ApiResponse(
       responseCode = "404",
       description = "No link has this code.",
@@ -44,20 +42,11 @@ class RedirectController {
           @Content(
               mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
               schema = @Schema(implementation = ProblemDetail.class)))
-  ResponseEntity<?> redirect(@PathVariable String code) {
-    return linkService
-        .resolve(code)
-        .map(
-            link ->
-                ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(link.destination()))
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .<Object>build())
-        .orElseGet(
-            () ->
-                ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(
-                        ProblemDetailsAdvice.problem(
-                            HttpStatus.NOT_FOUND, "No link has this code.")));
+  ResponseEntity<Void> redirect(@PathVariable String code) {
+    Link link = linkService.resolve(code).orElseThrow(LinkNotFoundException::new);
+    return ResponseEntity.status(HttpStatus.FOUND)
+        .location(URI.create(link.destination()))
+        .header(HttpHeaders.CACHE_CONTROL, "no-store")
+        .build();
   }
 }
