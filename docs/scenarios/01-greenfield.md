@@ -13,7 +13,7 @@ finding and how it was triaged.
 | [#11](https://github.com/ianverderame/url-shortener-ai-assisted/issues/11) Foundation: Mockito as a Java agent | Removes the JDK dynamic-attach warning before it becomes an error | [#15](https://github.com/ianverderame/url-shortener-ai-assisted/pull/15) |
 | [#4](https://github.com/ianverderame/url-shortener-ai-assisted/issues/4) Tracer bullet: create and redirect | `POST /api/v1/links` and `GET /{code}` end to end, collision retry, OpenAPI, smoke test | [#16](https://github.com/ianverderame/url-shortener-ai-assisted/pull/16) |
 | [#5](https://github.com/ianverderame/url-shortener-ai-assisted/issues/5) Auth hardening and error contract | Startup key guard, Spring Security with digest comparison, one RFC 7807 contract, no URL or key leaks | [#18](https://github.com/ianverderame/url-shortener-ai-assisted/pull/18) |
-| [#6](https://github.com/ianverderame/url-shortener-ai-assisted/issues/6) URL policy hardening | The destination URL policy, driven by an adversarial table; the constrained-vs-bare experiment | the PR that closes #6 |
+| [#6](https://github.com/ianverderame/url-shortener-ai-assisted/issues/6) URL policy hardening | The destination URL policy, driven by an adversarial table; the constrained-vs-bare experiment | [#20](https://github.com/ianverderame/url-shortener-ai-assisted/pull/20) |
 
 ## Decomposition
 
@@ -77,7 +77,8 @@ finding and how it was triaged.
   expected answers, so this shows that constraints carry the project's decisions, not that one
   output was smarter. Constraints also carry the author's mistakes. The constrained prompt
   repeated a too-narrow definition of a missing host that `pr-reviewer` later caught in the real
-  implementation, and the constrained output reproduced the same 7 wrong reasons. The PR that
-  closes #6 has both prompts and the full results.
+  implementation, and the constrained output reproduced the same 7 wrong reasons.
+  [PR #20](https://github.com/ianverderame/url-shortener-ai-assisted/pull/20) has both prompts
+  and the full results.
 - **The engineer reviews and merges every PR**, and tags `main` as `v0.1.0` after #6 merges. This
   baseline is the starting point for the brownfield (#7, #8) and ambiguity (#9) scenarios.
