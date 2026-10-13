@@ -4,9 +4,9 @@ A URL shortener service (Java 21, Spring Boot, PostgreSQL) built through an engi
 AI-assisted workflow. Requirements, decomposition, and progress are tracked in this repository's
 GitHub Issues and Pull Requests.
 
-> Work in progress. The service creates short links (API key required) and redirects them, and
-> every error is an RFC 7807 problem response. Destination validation is minimal for now; it and
-> the remaining features arrive slice by slice (see the issues).
+> Work in progress. The service creates short links (API key required) and redirects them, every
+> destination passes a strict URL policy, and every error is an RFC 7807 problem response. The
+> remaining features arrive slice by slice (see the issues).
 
 ## Run with Docker
 
@@ -35,8 +35,9 @@ docker compose run --rm smoke
 ```
 
 It checks that readiness is UP with the database included, creates a link with the demo key,
-follows it (`302` to the destination, `Cache-Control: no-store`), and checks that an unknown code
-returns `404`. It prints `SMOKE PASS` and exits 0 when all of that holds.
+follows it (`302` to the destination, `Cache-Control: no-store`), checks that a destination with
+user information is rejected with `400`, and checks that an unknown code returns `404`. It prints
+`SMOKE PASS` and exits 0 when all of that holds.
 
 ### Try it
 
@@ -48,6 +49,24 @@ curl -i -X POST http://127.0.0.1:8080/api/v1/links \
 ```
 
 The response contains `shortUrl`; opening it redirects to the destination.
+
+### Destination rules
+
+A destination must be an `http` or `https` URL of at most 2,048 characters with a host. It is
+rejected if it contains whitespace, control or invisible format characters, user information
+(`user@host`), a non-ASCII or punycode (`xn--`) host, any other non-ASCII character, or anything
+that is not a valid URI. Nothing is trimmed or re-encoded: percent-encode characters yourself.
+
+The scheme and host are lowercased, and everything else is kept exactly as sent. That string is
+what is stored, returned as `destination`, and sent in the redirect's `Location`. A rejection is a
+`400` problem whose `reason` property names the rule, for example `USERINFO_NOT_ALLOWED`.
+
+- **IP-literal hosts are accepted on purpose.** The service never fetches destinations, so there
+  is no server-side request forgery exposure.
+- **The shortener's own host is rejected,** ignoring case, a trailing dot and the port. Under
+  compose that host is `localhost`, so every `localhost` destination is rejected locally. Another
+  name for the same host (`127.0.0.1`, a DNS alias) is not detected, since no DNS lookups are
+  made. That redirect loop is a known limitation.
 
 ### Stop
 
