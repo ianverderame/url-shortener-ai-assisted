@@ -16,6 +16,10 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<!-- -DskipUTs skips unit tests only, so CI can run unit and integration tests as separate
+		     stages. -DskipTests still skips both. -->
+		<skipTests>false</skipTests>
+		<skipUTs>${skipTests}</skipUTs>
 	</properties>
 
 	<dependencies>
@@ -64,10 +68,78 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<!-- Every compiler warning fails the build (main and test sources). No lint exclusions. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<compilerArgs>
+						<arg>-Xlint:all</arg>
+						<arg>-Werror</arg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<skipTests>${skipUTs}</skipTests>
+				</configuration>
+			</plugin>
 			<!-- Runs *IT classes in the verify phase; executions come from the Boot parent. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
+			</plugin>
+			<!-- Formatting gate: google-java-format. `./mvnw spotless:apply` fixes, and `verify`
+			     runs the check. -->
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>3.10.4</version>
+				<configuration>
+					<java>
+						<googleJavaFormat>
+							<!-- 1.37.0 fails inside Spotless 3.10.4 (InvocationTargetException on
+							     every file); 1.36.1 is the newest that works with it. -->
+							<version>1.36.1</version>
+						</googleJavaFormat>
+					</java>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Mutation testing, report-only: `./mvnw test-compile pitest:mutationCoverage`.
+			     Not bound to the lifecycle; no threshold until the v0.1.0 baseline is measured. -->
+			<plugin>
+				<groupId>org.pitest</groupId>
+				<artifactId>pitest-maven</artifactId>
+				<version>1.30.0</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.pitest</groupId>
+						<artifactId>pitest-junit5-plugin</artifactId>
+						<version>1.2.3</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<!-- Unit tests only: integration tests need Docker and are too slow per mutant. -->
+					<excludedTestClasses>
+						<param>**.*IT</param>
+					</excludedTestClasses>
+					<outputFormats>
+						<param>HTML</param>
+						<param>XML</param>
+					</outputFormats>
+					<timestampedReports>false</timestampedReports>
+					<!-- The skeleton has no mutable logic yet; an empty report must not fail CI. -->
+					<failWhenNoMutations>false</failWhenNoMutations>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   verify:
-    name: Build and test (./mvnw verify)
+    name: Build and test
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -24,8 +24,63 @@ jobs:
           # Adoptium semver when a build suffix is given.
           java-version: "21.0.12+101.0.LTS"
           cache: maven
-      - name: Verify (unit + Testcontainers integration tests)
-        run: ./mvnw -B -ntp verify
+      - name: Formatting (google-java-format)
+        run: ./mvnw -B -ntp spotless:check
+      - name: Compile (-Xlint:all -Werror)
+        run: ./mvnw -B -ntp test-compile
+      - name: Unit tests
+        run: ./mvnw -B -ntp test
+      - name: Integration tests (Testcontainers)
+        run: ./mvnw -B -ntp verify -DskipUTs
+
+  mutation:
+    name: Mutation report (PIT, report-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21.0.12+101.0.LTS"
+          cache: maven
+      - name: Mutation testing (no threshold yet)
+        run: ./mvnw -B -ntp test-compile org.pitest:pitest-maven:mutationCoverage
+      - name: Upload report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pit-report
+          path: target/pit-reports/
+          # PIT writes no report while there is no mutable code (the skeleton).
+          if-no-files-found: warn
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      # From gitleaks_8.30.1_checksums.txt on the GitHub release.
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install gitleaks (pinned, checksum verified)
+        run: |
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$tarball" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$tarball"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan the history of the commit under test
+        # HEAD only: gitleaks' default (--all) would also scan unrelated fetched branches.
+        run: |
+          "$RUNNER_TEMP/gitleaks" git . --config .gitleaks.toml --log-opts="--full-history HEAD" \
+            --redact --no-banner --verbose
 
   reviewer-path:
     name: Reviewer path (compose up + smoke)
