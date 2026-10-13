@@ -69,6 +69,14 @@ class ProblemDetailsAdviceTest {
   }
 
   @Test
+  void anOversizedBodyIsPayloadTooLargeNamingTheCapButNotTheBody() {
+    assertProblem(
+        advice.requestBodyTooLarge(new RequestBodyTooLargeException(8192)),
+        HttpStatus.CONTENT_TOO_LARGE,
+        "The request body must not exceed 8192 bytes.");
+  }
+
+  @Test
   void anAuthenticationFailureIsUnauthorizedAndNamesTheHeaderButNotTheCause() {
     ProblemDetail problem =
         advice.unauthenticated(new BadCredentialsException("key did not match"));

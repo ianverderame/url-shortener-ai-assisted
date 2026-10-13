@@ -25,6 +25,8 @@ import org.springframework.test.web.servlet.client.RestTestClient;
  *
  * <p>Issue #17: the description matches what each operation actually returns, error responses are
  * problem details, and the API key is a security scheme on create only.
+ *
+ * <p>Issue #26: create also documents the 413 for a body over the cap.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
@@ -100,11 +102,11 @@ class ApiDocsIT {
         .contentTypeCompatibleWith(MediaType.TEXT_HTML);
   }
 
-  // #17 AC1: create documents exactly 201, 400, 401, 415 and 503.
+  // #17 AC1, plus #26's 413: create documents exactly 201, 400, 401, 413, 415 and 503.
   @Test
   void createDocumentsCreatedAndItsErrorStatuses() {
     Map<String, Object> responses = apiDocs().read(CREATE + ".responses");
-    assertThat(responses).containsOnlyKeys("201", "400", "401", "415", "503");
+    assertThat(responses).containsOnlyKeys("201", "400", "401", "413", "415", "503");
   }
 
   // #17 AC1: the 201 carries the link, not a problem detail.
@@ -123,7 +125,7 @@ class ApiDocsIT {
   void createDocumentsItsErrorsAsProblemResponses() {
     DocumentContext docs = apiDocs();
 
-    for (String status : List.of("400", "401", "415", "503")) {
+    for (String status : List.of("400", "401", "413", "415", "503")) {
       assertProblemResponse(docs, CREATE, status);
     }
   }
