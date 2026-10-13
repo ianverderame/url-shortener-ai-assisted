@@ -28,6 +28,16 @@ class PublicBaseUrlTest {
   }
 
   @ParameterizedTest
+  @ValueSource(strings = {"https://user:pass@sho.rt", "https://user@sho.rt/"})
+  void aBaseWithCredentialsIsRejectedWithoutPrintingThem(String base) {
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> new PublicBaseUrl(base))
+        .withMessageContaining("app.public-base-url")
+        .withMessageContaining("credentials")
+        .withMessageNotContaining("user");
+  }
+
+  @ParameterizedTest
   @ValueSource(
       strings = {
         "",

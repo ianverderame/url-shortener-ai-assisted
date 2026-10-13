@@ -5,12 +5,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -32,6 +34,8 @@ class RedirectIT {
   }
 
   @LocalServerPort int serverPort;
+
+  @Autowired JdbcClient jdbc;
 
   RestTestClient app;
 
@@ -84,9 +88,18 @@ class RedirectIT {
     app.get().uri("/" + path).exchange().expectStatus().isNotFound();
   }
 
-  @Test
-  void aPathWithNonBase62CharactersIsNotFound() {
-    app.get().uri("/abcd-123").exchange().expectStatus().isNotFound();
+  // Any other path never reaches the database. Rows stored directly under codes the API could never
+  // issue prove it: if the route matched these paths, the lookup would find them and redirect.
+  @ParameterizedTest
+  @ValueSource(strings = {"abcd-123", "abc1234", "abcd_123", "abcd.123"})
+  void aPathOutsideTheCodeFormatNeverReachesTheLookup(String storedCode) {
+    jdbc.sql(
+            "INSERT INTO links (code, destination, created_at) VALUES (:code, :destination, now())")
+        .param("code", storedCode)
+        .param("destination", "https://example.com/")
+        .update();
+
+    app.get().uri("/" + storedCode).exchange().expectStatus().isNotFound();
   }
 
   private String createLink(String destination) {

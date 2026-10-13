@@ -92,9 +92,15 @@ export APP_API_KEY=<a key of at least 32 characters>
 ./mvnw spring-boot:run
 ```
 
-The app refuses to start if `APP_API_KEY` is missing, shorter than 32 characters, or the published
-demo key (which is only accepted under the `local` profile that compose sets). Clients send the key
-in the `X-API-Key` header.
+The app refuses to start if `APP_API_KEY` is missing, shorter than 32 characters, contains anything
+other than printable ASCII (including whitespace, such as a key file's trailing newline), or is the
+published demo key (which is only accepted under the `local` profile that compose sets). Clients
+send the key in the `X-API-Key` header.
+
+Short URLs are built from `APP_PUBLIC_BASE_URL` (default `http://localhost:8080`), never from
+request headers. It must be an `http` or `https` URL with a host and no credentials, query, or
+fragment. A path is allowed (`https://example.com/s` gives `https://example.com/s/{code}`), but the
+app itself only serves `/{code}`, so a proxy in front must strip that prefix.
 
 On Windows, use `mvnw.cmd` and set the variables with `$env:NAME = "value"` (PowerShell).
 Readiness is then at `http://localhost:8081/actuator/health/readiness`.

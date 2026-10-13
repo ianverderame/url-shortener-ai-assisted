@@ -46,9 +46,11 @@ jobs:
           distribution: temurin
           java-version: "21.0.12+101.0.LTS"
           cache: maven
-      - name: Mutation testing (no threshold yet)
+      - name: Mutation testing (fails below the threshold in pom.xml)
         run: ./mvnw -B -ntp test-compile org.pitest:pitest-maven:mutationCoverage
       - name: Upload report
+        # Also when the threshold fails: that is when the report is needed.
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pit-report

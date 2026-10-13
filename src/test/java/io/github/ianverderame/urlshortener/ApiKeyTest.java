@@ -37,6 +37,34 @@ class ApiKeyTest {
         .withMessageNotContaining(shortKey);
   }
 
+  // Tomcat strips surrounding whitespace from header values and decodes them as ISO-8859-1, so a
+  // configured key with whitespace or non-ASCII characters could never be presented.
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        // a secret file's trailing newline; 31 characters plus the newline also passes the length
+        "0123456789abcdef0123456789abcde\n",
+        " 0123456789abcdef0123456789abcdef",
+        "0123456789abcdef0123456789abcdef\t",
+        "0123456789abcdef 0123456789abcdef",
+        "0123456789abcdef0123456789abcdefé",
+        "0123456789abcdef0123456789abcdef\u0000",
+        "0123456789abcdef0123456789abcdef\u007f"
+      })
+  void aKeyWithWhitespaceOrNonPrintableCharactersIsRejectedWithoutPrintingIt(String configured) {
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> new ApiKey(configured, noProfile))
+        .withMessageContaining("app.api-key")
+        .withMessageContaining("printable ASCII")
+        .withMessageNotContaining(configured.strip());
+  }
+
+  @Test
+  void theFirstAndLastPrintableAsciiCharactersAreAllowed() {
+    String key = "!0123456789abcdef0123456789abcdef~";
+    assertThat(new ApiKey(key, noProfile).matches(key)).isTrue();
+  }
+
   @Test
   void aKeyOfExactly32CharactersIsAccepted() {
     String key = "a".repeat(32);
@@ -97,6 +125,6 @@ class ApiKeyTest {
 
   @Test
   void theKeyIsNotExposedThroughToString() {
-    assertThat(new ApiKey(KEY, noProfile).toString()).doesNotContain(KEY);
+    assertThat(new ApiKey(KEY, noProfile).toString()).isEqualTo("ApiKey[redacted]");
   }
 }

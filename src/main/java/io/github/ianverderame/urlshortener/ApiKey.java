@@ -29,12 +29,18 @@ class ApiKey {
     if (configured == null || configured.isBlank()) {
       throw invalid("is missing");
     }
-    if (configured.length() < MIN_LENGTH) {
-      throw invalid("must be at least " + MIN_LENGTH + " characters");
-    }
     // Stripped, so stray whitespace (an env file, a copy-paste) can't smuggle the demo key past.
     if (configured.strip().equals(DEMO_KEY) && !environment.matchesProfiles(LOCAL_PROFILE)) {
       throw invalid("is the published demo key, which is only allowed under the local profile");
+    }
+    // Tomcat strips surrounding whitespace from header values and decodes them as ISO-8859-1, so a
+    // key with surrounding whitespace (a secret file's trailing newline) or non-ASCII could never
+    // match. Inner whitespace is refused too, so the key is always one plain header token.
+    if (!configured.chars().allMatch(c -> c >= '!' && c <= '~')) {
+      throw invalid("must contain only printable ASCII characters, with no whitespace");
+    }
+    if (configured.length() < MIN_LENGTH) {
+      throw invalid("must be at least " + MIN_LENGTH + " characters");
     }
     this.digest = sha256(configured);
   }
