@@ -48,7 +48,8 @@ Add `-v` to also delete the database volume.
 
 ## Run without Docker
 
-_Manually verified._ Requires JDK 21 and a running PostgreSQL 18 that you provide.
+_Manually verified._ Requires JDK 21 and a running PostgreSQL 18 that you provide. On Linux and
+macOS the Maven wrapper also needs `unzip` (it verifies the checksum of the Maven `.zip`).
 
 ```bash
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/urlshortener
@@ -62,7 +63,8 @@ Readiness is then at `http://localhost:8081/actuator/health/readiness`.
 
 ## Build and test
 
-Requires JDK 21 and Docker (the integration tests start PostgreSQL with Testcontainers).
+Requires JDK 21 and Docker (the integration tests start PostgreSQL with Testcontainers), plus
+`unzip` on Linux and macOS for the Maven wrapper.
 
 ```bash
 ./mvnw verify

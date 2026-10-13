@@ -1,6 +1,11 @@
 # Build stage: compile and package with the Maven wrapper. Tests run in CI (./mvnw verify), not
 # here, because the integration tests need Docker themselves.
 FROM eclipse-temurin:21.0.12.1_1-jdk-noble AS build
+# The wrapper verifies the SHA-256 of the Maven .zip; without unzip it would fetch the .tar.gz
+# instead, whose checksum differs. Build stage only; the runtime image doesn't get it.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends unzip \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /workspace
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
