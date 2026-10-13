@@ -1,6 +1,7 @@
 package io.github.ianverderame.urlshortener;
 
 import java.net.URI;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -15,7 +16,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 /**
  * The one error contract: every failure is an RFC 7807 problem with type, title, and status. The
  * framework's own exceptions (malformed JSON, 404 route, 405, 415, ...) come from the superclass;
- * the service's own are below. Details are fixed, safe strings: never a submitted URL or a key.
+ * the service's own are below. Details are fixed, safe strings: never a submitted URL or a key. The
+ * one framework detail that would echo input (a malformed parameter) is overridden below.
  */
 @RestControllerAdvice
 class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
@@ -33,6 +35,16 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler
+  ProblemDetail linkNotFound(LinkNotFoundException e) {
+    return problem(HttpStatus.NOT_FOUND, e.getMessage());
+  }
+
+  @ExceptionHandler
+  ProblemDetail invalidStatsRange(InvalidStatsRangeException e) {
+    return problem(HttpStatus.BAD_REQUEST, e.getMessage());
+  }
+
+  @ExceptionHandler
   ProblemDetail codeGenerationExhausted(CodeGenerationExhaustedException e) {
     return problem(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
   }
@@ -42,6 +54,15 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
     return problem(
         HttpStatus.UNAUTHORIZED,
         "A valid " + ApiKeyAuthenticationFilter.HEADER + " header is required.");
+  }
+
+  /** A malformed parameter names the parameter, never its value, which could carry a URL. */
+  @Override
+  protected ResponseEntity<Object> handleTypeMismatch(
+      TypeMismatchException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    ProblemDetail body =
+        problem(HttpStatus.BAD_REQUEST, "Parameter '" + ex.getPropertyName() + "' is not valid.");
+    return handleExceptionInternal(ex, body, headers, status, request);
   }
 
   /** Framework problems: fill in the type, which is otherwise left out of the JSON. */

@@ -41,6 +41,23 @@ status=$(printf '%s\n' "$headers" | head -n 1 | cut -d ' ' -f 2)
 [ "$(header "$headers" Location)" = "$DESTINATION" ] || fail "Location is not the destination"
 [ "$(header "$headers" Cache-Control)" = "no-store" ] || fail "Cache-Control is not no-store"
 
+echo "Reading the link's stats..."
+# Clicks are recorded asynchronously, so poll a bounded number of times for the one GET above.
+total=""
+attempt=0
+while [ "$attempt" -lt 20 ]; do
+  attempt=$((attempt + 1))
+  stats=$(curl -sS -w '\n%{http_code}' "$APP_URL/api/v1/links/$code/stats" \
+    -H "X-API-Key: $APP_API_KEY") || fail "stats request failed"
+  status=$(printf '%s\n' "$stats" | tail -n 1)
+  [ "$status" = "200" ] || fail "stats returned $status, expected 200"
+  total=$(printf '%s\n' "$stats" | sed '$d' | sed -n 's/.*"total":\([0-9]*\).*/\1/p')
+  [ "$total" = "1" ] && break
+  sleep 0.5
+done
+[ "$total" = "1" ] || fail "stats total is '$total' after $attempt attempts, expected 1"
+printf '%s\n' "$stats" | grep -q '"days":\[' || fail "stats response has no days"
+
 echo "Creating a link to a rejected destination..."
 rejected=$(curl -sS -w '\n%{http_code}' -X POST "$APP_URL/api/v1/links" \
   -H "X-API-Key: $APP_API_KEY" -H 'Content-Type: application/json' \

@@ -35,9 +35,10 @@ docker compose run --rm smoke
 ```
 
 It checks that readiness is UP with the database included, creates a link with the demo key,
-follows it (`302` to the destination, `Cache-Control: no-store`), checks that a destination with
-user information is rejected with `400`, and checks that an unknown code returns `404`. It prints
-`SMOKE PASS` and exits 0 when all of that holds.
+follows it (`302` to the destination, `Cache-Control: no-store`), and reads the link's stats until
+they show that one click (recording is asynchronous, so it polls up to 20 times, half a second
+apart). It also checks that a destination with user information is rejected with `400`, and that
+an unknown code returns `404`. It prints `SMOKE PASS` and exits 0 when all of that holds.
 
 ### Try it
 
@@ -49,6 +50,21 @@ curl -i -X POST http://127.0.0.1:8080/api/v1/links \
 ```
 
 The response contains `shortUrl`; opening it redirects to the destination.
+
+Each `GET` of a short link counts as one click (`HEAD` and unknown codes don't). To read a link's
+clicks, use its `code`:
+
+```bash
+curl -i "http://127.0.0.1:8080/api/v1/links/{code}/stats?from=2026-10-01&to=2026-10-13" \
+  -H "X-API-Key: local-demo-key-NOT-A-SECRET-do-not-use-elsewhere"
+```
+
+`from` and `to` are UTC dates, both inclusive. Without them you get the 30 days ending today
+(UTC). The response has the range `total` and one entry per day in `days`, oldest first, with `0`
+for days without clicks. A range longer than 366 days, `from` after `to`, `to` after today, or a
+date before `0001-01-01` is a `400`; an unknown code is a `404`. Clicks are recorded off the
+redirect path, so one can take a moment to appear, and under heavy load or a database outage a
+click can be dropped (counted, never blocking the redirect).
 
 ### Destination rules
 
