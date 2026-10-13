@@ -5,12 +5,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionOperations;
 
@@ -24,7 +21,7 @@ class LinkService {
 
   private static final String EXHAUSTION_METRIC = "links.code.generation.exhausted";
 
-  private final JdbcClient jdbcClient;
+  private final LinkRepository links;
   private final TransactionOperations transactions;
   private final ShortCodeGenerator shortCodeGenerator;
   private final DestinationPolicy destinationPolicy;
@@ -32,13 +29,13 @@ class LinkService {
   private final Counter exhaustionCounter;
 
   LinkService(
-      JdbcClient jdbcClient,
+      LinkRepository links,
       TransactionOperations transactions,
       ShortCodeGenerator shortCodeGenerator,
       DestinationPolicy destinationPolicy,
       Clock clock,
       MeterRegistry meterRegistry) {
-    this.jdbcClient = jdbcClient;
+    this.links = links;
     this.transactions = transactions;
     this.shortCodeGenerator = shortCodeGenerator;
     this.destinationPolicy = destinationPolicy;
@@ -51,7 +48,7 @@ class LinkService {
 
   /**
    * Inserts the link under a fresh code, storing the policy's normalized destination. Each attempt
-   * runs in its own transaction, and only a code conflict (an empty {@code RETURNING}) leads to
+   * runs in its own transaction, and only a code conflict (the code is already taken) leads to
    * another attempt.
    */
   Link create(String submitted) {
@@ -60,7 +57,7 @@ class LinkService {
       String code = shortCodeGenerator.generate();
       Instant createdAt = Instant.now(clock);
       Optional<Link> inserted =
-          transactions.execute(status -> insert(code, destination, createdAt));
+          transactions.execute(status -> links.insertIfCodeFree(code, destination, createdAt));
       if (inserted.isPresent()) {
         // Code and host only: the full destination may carry tokens in its path or query.
         log.info("Created link code={} host={}", code, URI.create(destination).getHost());
@@ -71,25 +68,7 @@ class LinkService {
     throw new CodeGenerationExhaustedException();
   }
 
-  private Optional<Link> insert(String code, String destination, Instant createdAt) {
-    return jdbcClient
-        .sql(
-            "INSERT INTO links (code, destination, created_at) "
-                + "VALUES (:code, :destination, :createdAt) "
-                + "ON CONFLICT (code) DO NOTHING "
-                + "RETURNING id, code, destination, created_at")
-        .param("code", code)
-        .param("destination", destination)
-        .param("createdAt", OffsetDateTime.ofInstant(createdAt, ZoneOffset.UTC))
-        .query(Link.class)
-        .optional();
-  }
-
   Optional<Link> resolve(String code) {
-    return jdbcClient
-        .sql("SELECT id, code, destination, created_at FROM links WHERE code = :code")
-        .param("code", code)
-        .query(Link.class)
-        .optional();
+    return links.findByCode(code);
   }
 }
