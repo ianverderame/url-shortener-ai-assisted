@@ -17,55 +17,61 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 @Import(TestcontainersConfiguration.class)
 class HealthIT {
 
-	@LocalServerPort
-	int serverPort;
+  @LocalServerPort int serverPort;
 
-	@LocalManagementPort
-	int managementPort;
+  @LocalManagementPort int managementPort;
 
-	RestTestClient management;
+  RestTestClient management;
 
-	RestTestClient app;
+  RestTestClient app;
 
-	@BeforeEach
-	void setUp() {
-		management = RestTestClient.bindToServer().baseUrl("http://localhost:" + managementPort).build();
-		app = RestTestClient.bindToServer().baseUrl("http://localhost:" + serverPort).build();
-	}
+  @BeforeEach
+  void setUp() {
+    management =
+        RestTestClient.bindToServer().baseUrl("http://localhost:" + managementPort).build();
+    app = RestTestClient.bindToServer().baseUrl("http://localhost:" + serverPort).build();
+  }
 
-	@Test
-	void readinessIsUpAndIncludesTheDatabase() {
-		management.get().uri("/actuator/health/readiness").exchange()
-			.expectStatus().isOk()
-			.expectBody()
-			.jsonPath("$.status").isEqualTo("UP")
-			.jsonPath("$.components.db.status").isEqualTo("UP");
-	}
+  @Test
+  void readinessIsUpAndIncludesTheDatabase() {
+    management
+        .get()
+        .uri("/actuator/health/readiness")
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$.status")
+        .isEqualTo("UP")
+        .jsonPath("$.components.db.status")
+        .isEqualTo("UP");
+  }
 
-	@Test
-	void livenessIsUp() {
-		management.get().uri("/actuator/health/liveness").exchange()
-			.expectStatus().isOk()
-			.expectBody()
-			.jsonPath("$.status").isEqualTo("UP");
-	}
+  @Test
+  void livenessIsUp() {
+    management
+        .get()
+        .uri("/actuator/health/liveness")
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$.status")
+        .isEqualTo("UP");
+  }
 
-	@Test
-	void healthIsNotServedOnTheApplicationPort() {
-		app.get().uri("/actuator/health").exchange()
-			.expectStatus().isNotFound();
-	}
+  @Test
+  void healthIsNotServedOnTheApplicationPort() {
+    app.get().uri("/actuator/health").exchange().expectStatus().isNotFound();
+  }
 
-	@Test
-	void managementPortExposesOnlyHealth() {
-		management.get().uri("/actuator/env").exchange()
-			.expectStatus().isNotFound();
-	}
+  @Test
+  void managementPortExposesOnlyHealth() {
+    management.get().uri("/actuator/env").exchange().expectStatus().isNotFound();
+  }
 
-	@Test
-	void managementPortHasNoDiscoveryPage() {
-		management.get().uri("/actuator").exchange()
-			.expectStatus().isNotFound();
-	}
-
+  @Test
+  void managementPortHasNoDiscoveryPage() {
+    management.get().uri("/actuator").exchange().expectStatus().isNotFound();
+  }
 }

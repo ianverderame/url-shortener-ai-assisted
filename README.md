@@ -69,3 +69,6 @@ Requires JDK 21 and Docker (the integration tests start PostgreSQL with Testcont
 ```bash
 ./mvnw verify
 ```
+
+`verify` also checks formatting (google-java-format) and treats compiler warnings as errors.
+Fix formatting with `./mvnw spotless:apply`.

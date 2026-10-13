@@ -1,0 +1,11 @@
+# Secret scanning (gitleaks). Default rules, plus one allowlist entry: the published local demo
+# key, matched as the exact literal. Nothing else is allowlisted; add entries only with engineer
+# sign-off on the PR.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Published local demo API key, labeled NOT-A-SECRET (compose.yaml, local profile)"
+regexTarget = "secret"
+regexes = ['''^local-demo-key-NOT-A-SECRET-do-not-use-elsewhere$''']

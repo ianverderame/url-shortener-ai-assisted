@@ -5,25 +5,32 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 ## Current
 
 - **Milestone:** Foundation
-- **Active issue:** #2 (AI guardrails, runnable skeleton, Spring Boot 4 setup checks)
-- **Branch:** `issue-2/ai-guardrails-skeleton-s1`
+- **Active issue:** #3 Quality gates and branch protection. PR #13 is green and waiting for
+  engineer sign-off and merge. All acceptance criteria are verified there: throwaway PR #14
+  (closed) showed each gate failing and the PIT artifact; the direct push to `main` and the
+  merge with a red check were both rejected.
+- **After merge:** confirm that CodeQL runs on `main` and that Dependabot accepts its config.
 
-## Decisions (issue #2)
+## Recently completed
 
-- Runtime image `eclipse-temurin:21.0.12.1_1-jre-noble` (curl-based compose healthcheck); build
-  image `eclipse-temurin:21.0.12.1_1-jdk-noble`. Spring Boot 4.1.1, Maven 3.10.0 (wrapper 3.3.4),
-  `postgres:18.6-alpine3.24`, `curlimages/curl:8.22.0`. Exact tags, no digests; Actions pinned by SHA.
-- Boot 4 checklist results are recorded as idioms in `CLAUDE.md`.
+- #2 AI guardrails, runnable skeleton, Spring Boot 4 setup checks (PR #12, merged).
+- #3 gates: google-java-format 1.36.1 via Spotless (1.37.0 breaks in Spotless 3.10.4),
+  `-Xlint:all -Werror`, unit and integration stages (`-DskipUTs`), PIT report job, gitleaks
+  8.30.1 (exact demo-key allowlist, `HEAD` history only), CodeQL, Dependabot. Branch protection
+  on `main`: PR plus 4 required checks, strict, enforced for admins.
 
-## Done
+## Up next
 
-- AI workflow scaffolding (first commit).
-- Runnable skeleton: app + Flyway (no migrations), health on management port 8081 (readiness
-  includes DB), Dockerfile, compose (`postgres`/`app`/`smoke`), `HealthIT` on Testcontainers,
-  CI (`verify` + reviewer-path), README run paths. Verified locally; CI not yet run.
+- #11 Mockito Java agent, strictly after #3 merges (both touch `pom.xml` and test JVM setup).
+- Then #4 tracer bullet (create + redirect).
 
-## Next
+## Carry-forward notes
 
-- `pr-reviewer` run done and triaged (findings in the PR). Next: commit (set `mvnw` +x), push,
-  open the PR with the template, confirm CI green.
-- For #5: Security applies on the management port; permit health and `/error` explicitly.
+- For #5: Spring Security applies on the management port. Permit health and `/error`
+  explicitly, or the compose healthcheck, smoke test, and unknown-path errors break.
+- In #4, switch the `pit-report` upload to `if-no-files-found: error` (no report until then).
+- If gitleaks flags the demo key in a new context, check the captured secret before touching the
+  allowlist (it matches the exact literal only).
+- #6 adversarial URL table is posted on #6 (210 cases, 12 open questions for the engineer).
+- Required check names are in branch protection: renaming a CI job breaks merging until the
+  protection is updated.
