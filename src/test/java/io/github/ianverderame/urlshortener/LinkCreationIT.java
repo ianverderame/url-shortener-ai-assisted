@@ -16,6 +16,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
@@ -26,17 +28,17 @@ import org.springframework.test.web.servlet.client.RestTestClient;
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import({TestcontainersConfiguration.class, LinkCreationIT.FixedClockConfig.class})
-@TestPropertySource(
-    properties = {
-      "app.api-key=test-api-key-for-link-creation-it",
-      "app.public-base-url=http://localhost:8080"
-    })
+@TestPropertySource(properties = "app.public-base-url=http://localhost:8080")
 class LinkCreationIT {
 
-  private static final String API_KEY = "test-api-key-for-link-creation-it";
   private static final String PUBLIC_BASE_URL = "http://localhost:8080";
   // Microsecond precision: PostgreSQL timestamptz stores no finer.
   private static final Instant NOW = Instant.parse("2026-01-02T03:04:05.123456Z");
+
+  @DynamicPropertySource
+  static void apiKey(DynamicPropertyRegistry registry) {
+    TestApiKey.register(registry);
+  }
 
   @LocalServerPort int serverPort;
 
@@ -54,7 +56,7 @@ class LinkCreationIT {
 
     app.post()
         .uri("/api/v1/links")
-        .header("X-API-Key", API_KEY)
+        .header("X-API-Key", TestApiKey.VALUE)
         .contentType(MediaType.APPLICATION_JSON)
         .body("{\"destination\":\"" + destination + "\"}")
         .exchange()

@@ -7,6 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
@@ -16,19 +18,18 @@ import org.springframework.test.web.servlet.client.RestTestClient;
  * <p>Grows one vertical slice at a time; this slice covers only the minimal validation called out
  * in the issue's constraints: scheme must be http or https, and a host must be present. The full
  * adversarial URL policy (userinfo, control characters, length limits, self-host, non-ASCII hosts,
- * etc.) is issue #6 and is explicitly out of scope here. Error body shape (RFC 7807) is also out of
- * scope; this slice asserts status only.
+ * etc.) is issue #6 and is explicitly out of scope here. The problem body shape is covered by
+ * {@link ErrorContractIT}.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
-@TestPropertySource(
-    properties = {
-      "app.api-key=test-api-key-for-link-creation-validation-it",
-      "app.public-base-url=http://localhost:8080"
-    })
+@TestPropertySource(properties = "app.public-base-url=http://localhost:8080")
 class LinkCreationValidationIT {
 
-  private static final String API_KEY = "test-api-key-for-link-creation-validation-it";
+  @DynamicPropertySource
+  static void apiKey(DynamicPropertyRegistry registry) {
+    TestApiKey.register(registry);
+  }
 
   @LocalServerPort int serverPort;
 
@@ -45,7 +46,7 @@ class LinkCreationValidationIT {
 
     app.post()
         .uri("/api/v1/links")
-        .header("X-API-Key", API_KEY)
+        .header("X-API-Key", TestApiKey.VALUE)
         .contentType(MediaType.APPLICATION_JSON)
         .body("{\"destination\":\"" + destination + "\"}")
         .exchange()
@@ -59,7 +60,7 @@ class LinkCreationValidationIT {
 
     app.post()
         .uri("/api/v1/links")
-        .header("X-API-Key", API_KEY)
+        .header("X-API-Key", TestApiKey.VALUE)
         .contentType(MediaType.APPLICATION_JSON)
         .body("{\"destination\":\"" + destination + "\"}")
         .exchange()
@@ -71,7 +72,7 @@ class LinkCreationValidationIT {
   void creatingALinkWithoutADestinationReturnsBadRequest() {
     app.post()
         .uri("/api/v1/links")
-        .header("X-API-Key", API_KEY)
+        .header("X-API-Key", TestApiKey.VALUE)
         .contentType(MediaType.APPLICATION_JSON)
         .body("{}")
         .exchange()

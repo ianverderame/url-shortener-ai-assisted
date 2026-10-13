@@ -7,6 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 /**
@@ -16,6 +18,11 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
 class HealthIT {
+
+  @DynamicPropertySource
+  static void apiKey(DynamicPropertyRegistry registry) {
+    TestApiKey.register(registry);
+  }
 
   @LocalServerPort int serverPort;
 
@@ -67,7 +74,8 @@ class HealthIT {
 
   @Test
   void managementPortExposesOnlyHealth() {
-    management.get().uri("/actuator/env").exchange().expectStatus().isNotFound();
+    // The management port follows the same error contract as the application port.
+    ErrorContractIT.assertProblem(management.get().uri("/actuator/env").exchange(), 404);
   }
 
   @Test

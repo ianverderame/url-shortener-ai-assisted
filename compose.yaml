@@ -1,7 +1,7 @@
 name: url-shortener
 
-# PUBLISHED LOCAL DEMO KEY - NOT A SECRET. Local use only; a startup guard that rejects it outside
-# the `local` profile arrives with authentication (issue #5). Defined once, used by app and smoke.
+# PUBLISHED LOCAL DEMO KEY - NOT A SECRET. Local use only: the app refuses to start with it unless
+# the `local` profile is active (set below). Defined once, used by app and smoke.
 x-demo-api-key: &demo-api-key local-demo-key-NOT-A-SECRET-do-not-use-elsewhere
 
 services:

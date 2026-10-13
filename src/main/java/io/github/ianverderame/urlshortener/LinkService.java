@@ -9,12 +9,16 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionOperations;
 
 @Service
 class LinkService {
+
+  private static final Logger log = LoggerFactory.getLogger(LinkService.class);
 
   /** Attempts per create; with 62^8 codes, more than one conflict in a row is an anomaly. */
   private static final int MAX_CODE_ATTEMPTS = 3;
@@ -55,6 +59,8 @@ class LinkService {
       Optional<Link> inserted =
           transactions.execute(status -> insert(code, destination, createdAt));
       if (inserted.isPresent()) {
+        // Code and host only: the full destination may carry tokens in its path or query.
+        log.info("Created link code={} host={}", code, URI.create(destination).getHost());
         return inserted.get();
       }
     }
