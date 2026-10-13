@@ -146,8 +146,8 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Mutation testing, report-only: `./mvnw test-compile pitest:mutationCoverage`.
-			     Not bound to the lifecycle; no threshold until the v0.1.0 baseline is measured. -->
+			<!-- Mutation testing: `./mvnw test-compile pitest:mutationCoverage`. Not bound to the
+			     lifecycle; CI runs it and fails below mutationThreshold. -->
 			<plugin>
 				<groupId>org.pitest</groupId>
 				<artifactId>pitest-maven</artifactId>
@@ -169,6 +169,9 @@
 						<param>XML</param>
 					</outputFormats>
 					<timestampedReports>false</timestampedReports>
+					<!-- The level reached in #7; raise it as tests improve, never lower it. Unit tests
+					     only, so wiring covered by integration tests counts as uncovered. -->
+					<mutationThreshold>85</mutationThreshold>
 				</configuration>
 			</plugin>
 		</plugins>

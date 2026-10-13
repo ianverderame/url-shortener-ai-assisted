@@ -45,8 +45,9 @@ Quality gates (CI runs all of them; `main` only changes through a PR with green 
   `verify` fails on unformatted code.
 - Compiler warnings are errors (see "Compiler lint" below).
 - Tests: `./mvnw test` (unit) and `./mvnw verify -DskipUTs` (integration only); `verify` runs both.
-- Mutation testing, report-only: `./mvnw test-compile pitest:mutationCoverage`
-  (report in `target/pit-reports/`). No threshold until the `v0.1.0` baseline.
+- Mutation testing: `./mvnw test-compile pitest:mutationCoverage` (report in
+  `target/pit-reports/`). Fails below `mutationThreshold` in `pom.xml` (85% since #7); raise it as
+  tests improve, never lower it.
 - Secret scanning: gitleaks with `.gitleaks.toml`. The only allowlist entry is the exact demo-key
   literal; never widen it.
 - CodeQL (Java) and Dependabot (Maven, Actions, Docker, Compose; grouped weekly, majors ignored).
