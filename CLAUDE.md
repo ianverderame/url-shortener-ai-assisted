@@ -51,6 +51,13 @@ Quality gates (CI runs all of them; `main` only changes through a PR with green 
 - Secret scanning: gitleaks with `.gitleaks.toml`. The only allowlist entry is the exact demo-key
   literal; never widen it.
 - CodeQL (Java) and Dependabot (Maven, Actions, Docker, Compose; grouped weekly, majors ignored).
+- Code-scanning alerts are triaged, never suppressed in code: don't change code just to silence
+  an alert, and add no repo-wide rule exclusions to the CodeQL configuration. When one appears,
+  the AI analyzes it and recommends fix or dismiss; the engineer decides. An alert outside the
+  active issue becomes its own issue (rule 1). A real finding is fixed, starting with a failing
+  regression test. For a false positive, the AI adds a test pinning the assumption that makes it
+  safe (e.g. `CsrfAssumptionsIT`) and a code comment pointing to that test; the engineer dismisses
+  the alert with a written reason, never the AI.
 - Pins Dependabot can't see, kept in step by hand in the same PR as the related bump: the
   Testcontainers Postgres tag (match `compose.yaml`), the CI `java-version` (match the Temurin
   image), `GITLEAKS_VERSION`/SHA in `ci.yml`, and the google-java-format version in `pom.xml`
