@@ -5,11 +5,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -66,6 +70,30 @@ class ProblemDetailsAdviceTest {
         advice.codeGenerationExhausted(new CodeGenerationExhaustedException()),
         HttpStatus.SERVICE_UNAVAILABLE,
         "Could not allocate a short code. Try again.");
+  }
+
+  @Test
+  void anUnavailableDatabaseIsServiceUnavailableWithoutTheCause() {
+    assertProblem(
+        advice.databaseUnavailable(
+            new CannotGetJdbcConnectionException("db.internal:5432 refused")),
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "The service is temporarily unavailable. Try again.");
+  }
+
+  @Test
+  @ExtendWith(OutputCaptureExtension.class)
+  void anUnavailableDatabaseLogsOneLineNamingTheExceptionTypeButNotItsMessage(
+      CapturedOutput output) {
+    advice.databaseUnavailable(new CannotGetJdbcConnectionException("db.internal:5432 refused"));
+
+    assertThat(output.getAll().lines())
+        .singleElement()
+        .asString()
+        .contains("WARN")
+        .contains("Database unavailable")
+        .contains("CannotGetJdbcConnectionException")
+        .doesNotContain("db.internal");
   }
 
   @Test

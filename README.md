@@ -106,13 +106,13 @@ These are the service's objectives (decided in
 
 | SLO | Target | Measured by |
 |---|---|---|
-| Bounded failure | 100% of API requests answer within 3 s with a `503` problem while the database is down or hung | Integration tests against a stopped or paused Testcontainers database ([#24](https://github.com/ianverderame/url-shortener-ai-assisted/issues/24)); `hikaricp.connections.timeout`, and `http.server.requests` with `status:503` |
-| Truthful readiness | Readiness reports `DOWN` within 2 s per probe while the database is unreachable, and `UP` within one probe interval after recovery | Integration test ([#24](https://github.com/ianverderame/url-shortener-ai-assisted/issues/24)); the compose healthcheck (3 s timeout) gets an answer instead of timing out |
+| Bounded failure | 100% of API requests answer within 3 s with a `503` problem while the database is down or hung | Integration tests against a stopped or paused Testcontainers database: [`DatabaseOutageIT`](src/test/java/io/github/ianverderame/urlshortener/DatabaseOutageIT.java), [`DatabaseHangIT`](src/test/java/io/github/ianverderame/urlshortener/DatabaseHangIT.java), [`DatabaseHangAtPoolStartIT`](src/test/java/io/github/ianverderame/urlshortener/DatabaseHangAtPoolStartIT.java) (each failure also logs one line); `hikaricp.connections.timeout`, and `http.server.requests` with `status:503` |
+| Truthful readiness | Readiness reports `DOWN` within 2 s per probe while the database is unreachable, and `UP` within one probe interval after recovery | [`ReadinessDuringOutageIT`](src/test/java/io/github/ianverderame/urlshortener/ReadinessDuringOutageIT.java), which also checks that liveness stays `UP`; the compose healthcheck (3 s timeout) gets an answer instead of timing out |
 | Clean shutdown | 100% of SIGTERMs exit with code `143` inside the 30 s grace period, in every database state | A scripted or Testcontainers check of shutdown with a healthy and a hung database: exit code `143`, not `137` ([#27](https://github.com/ianverderame/url-shortener-ai-assisted/issues/27)) |
 | Analytics loss counted | Every lost click is counted by reason; the target ratio is set once a baseline is measured | `clicks.lost` (by `reason`) against clicks served: `http.server.requests` with `method:GET` and `status:302` (each redirect `GET` is one click) |
 
-The tests for the first three objectives arrive with the issues linked in the table; until then
-those objectives are targets, not yet verified.
+The first two objectives are verified by the tests named in the table. The clean-shutdown test
+arrives with #27; until then that objective is a target, not yet verified.
 
 ### Stop
 

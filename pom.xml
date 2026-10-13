@@ -115,12 +115,16 @@
 					<argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
 				</configuration>
 			</plugin>
-			<!-- Runs *IT classes in the verify phase; executions come from the Boot parent. -->
+			<!-- Runs *IT classes in the verify phase; executions come from the Boot parent.
+			     Hikari normally skips validating a connection used in the last 500 ms; the ITs turn
+			     that off so every borrow is validated, as it is in the running service between
+			     healthcheck probes. That is the worst case for the database-outage bounds (#24),
+			     reached without sleeping in a test. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<configuration>
-					<argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+					<argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} -Dcom.zaxxer.hikari.aliveBypassWindowMs=0</argLine>
 				</configuration>
 			</plugin>
 			<!-- Formatting gate: google-java-format. `./mvnw spotless:apply` fixes, and `verify`
