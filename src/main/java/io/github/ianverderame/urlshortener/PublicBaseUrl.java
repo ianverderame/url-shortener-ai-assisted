@@ -15,6 +15,7 @@ class PublicBaseUrl {
   private static final String PROPERTY = "app.public-base-url";
 
   private final String base;
+  private final String host;
 
   PublicBaseUrl(@Value("${" + PROPERTY + "}") String configured) {
     URI uri;
@@ -34,6 +35,12 @@ class PublicBaseUrl {
       throw invalid("must not have a query or fragment");
     }
     this.base = uri.toString().replaceAll("/+$", "");
+    this.host = uri.getHost();
+  }
+
+  /** The host as configured, for the destination policy's self-host check. */
+  String host() {
+    return host;
   }
 
   String shortUrl(String code) {

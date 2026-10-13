@@ -22,9 +22,14 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
 
   private static final URI DEFAULT_TYPE = URI.create("about:blank");
 
+  /** Policy rejections also carry the reason code as a top-level {@code reason} property. */
   @ExceptionHandler
   ProblemDetail invalidDestination(InvalidDestinationException e) {
-    return problem(HttpStatus.BAD_REQUEST, e.getMessage());
+    ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, e.getMessage());
+    if (e.reason() != null) {
+      problem.setProperty("reason", e.reason().name());
+    }
+    return problem;
   }
 
   @ExceptionHandler

@@ -13,13 +13,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 /**
- * Tracer bullet for issue #4: a non-http(s) destination on create returns 400.
- *
- * <p>Grows one vertical slice at a time; this slice covers only the minimal validation called out
- * in the issue's constraints: scheme must be http or https, and a host must be present. The full
- * adversarial URL policy (userinfo, control characters, length limits, self-host, non-ASCII hosts,
- * etc.) is issue #6 and is explicitly out of scope here. The problem body shape is covered by
- * {@link ErrorContractIT}.
+ * Tracer bullet for issue #4: a non-http(s) destination, a missing host, or no destination at all
+ * returns 400. The full URL policy's case table is {@link DestinationPolicyTest}, its HTTP path is
+ * {@link DestinationPolicyIT}, and the problem body shape is covered by {@link ErrorContractIT}.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
@@ -77,6 +73,11 @@ class LinkCreationValidationIT {
         .body("{}")
         .exchange()
         .expectStatus()
-        .isBadRequest();
+        .isBadRequest()
+        .expectBody()
+        .jsonPath("$.detail")
+        .isEqualTo("Destination is required.")
+        .jsonPath("$.reason")
+        .doesNotExist();
   }
 }
