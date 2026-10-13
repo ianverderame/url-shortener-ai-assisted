@@ -38,6 +38,10 @@ class SecurityConfig {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
           }
         };
+    // CSRF is off on purpose (CodeQL java/spring-disabled-csrf-protection, dismissed as a false
+    // positive): the only credential is the X-API-Key header, which browsers never attach on their
+    // own, and there are no cookies, sessions, or allowed cross-origin callers. CsrfAssumptionsIT
+    // pins those assumptions; adding cookie or session auth, or CORS, means turning CSRF back on.
     return http.csrf(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
