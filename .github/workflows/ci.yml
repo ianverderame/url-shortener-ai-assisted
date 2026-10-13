@@ -53,8 +53,8 @@ jobs:
         with:
           name: pit-report
           path: target/pit-reports/
-          # PIT writes no report while there is no mutable code (the skeleton).
-          if-no-files-found: warn
+          # A missing report means PIT ran nothing, which is a failure now that there is code.
+          if-no-files-found: error
 
   secrets:
     name: Secret scan (gitleaks)

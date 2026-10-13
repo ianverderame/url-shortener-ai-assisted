@@ -4,8 +4,9 @@ A URL shortener service (Java 21, Spring Boot, PostgreSQL) built through an engi
 AI-assisted workflow. Requirements, decomposition, and progress are tracked in this repository's
 GitHub Issues and Pull Requests.
 
-> Work in progress. The service currently starts, connects to PostgreSQL, and reports health.
-> Features arrive slice by slice; see the issues.
+> Work in progress. The service creates short links and redirects them. Validation and
+> authentication are minimal for now; hardening and the remaining features arrive slice by
+> slice (see the issues).
 
 ## Run with Docker
 
@@ -20,7 +21,7 @@ This starts PostgreSQL and the app. The app waits for the database, then becomes
 
 | Port | What | Reachable from |
 |---|---|---|
-| `8080` | Application API | `127.0.0.1` only |
+| `8080` | Application API and interactive docs (`/swagger-ui/index.html`) | `127.0.0.1` only |
 | `8081` | Health (`/actuator/health/readiness`, `/actuator/health/liveness`) | `127.0.0.1` only |
 
 PostgreSQL is not published to your machine.
@@ -33,7 +34,20 @@ With the stack running, in a second terminal:
 docker compose run --rm smoke
 ```
 
-It prints `SMOKE PASS` and exits 0 when readiness is UP with the database included.
+It checks that readiness is UP with the database included, creates a link with the demo key,
+follows it (`302` to the destination, `Cache-Control: no-store`), and checks that an unknown code
+returns `404`. It prints `SMOKE PASS` and exits 0 when all of that holds.
+
+### Try it
+
+```bash
+curl -i -X POST http://127.0.0.1:8080/api/v1/links \
+  -H "X-API-Key: local-demo-key-NOT-A-SECRET-do-not-use-elsewhere" \
+  -H "Content-Type: application/json" \
+  -d '{"destination":"https://example.com/"}'
+```
+
+The response contains `shortUrl`; opening it redirects to the destination.
 
 ### Stop
 

@@ -1,5 +1,9 @@
 name: url-shortener
 
+# PUBLISHED LOCAL DEMO KEY - NOT A SECRET. Local use only; a startup guard that rejects it outside
+# the `local` profile arrives with authentication (issue #5). Defined once, used by app and smoke.
+x-demo-api-key: &demo-api-key local-demo-key-NOT-A-SECRET-do-not-use-elsewhere
+
 services:
   postgres:
     image: postgres:18.6-alpine3.24
@@ -28,9 +32,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/urlshortener
       SPRING_DATASOURCE_USERNAME: urlshortener
       SPRING_DATASOURCE_PASSWORD: local-demo-password
-      # PUBLISHED LOCAL DEMO KEY - NOT A SECRET. Local use only; a startup guard that rejects it
-      # outside the `local` profile arrives with authentication (issue #5).
-      APP_API_KEY: local-demo-key-NOT-A-SECRET-do-not-use-elsewhere
+      APP_API_KEY: *demo-api-key # see x-demo-api-key above
     ports:
       # Loopback only: the published demo key must never be usable from the network.
       - "127.0.0.1:8080:8080"
@@ -51,6 +53,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    environment:
+      APP_API_KEY: *demo-api-key # see x-demo-api-key above
     volumes:
       - ./smoke:/smoke:ro
     entrypoint: ["/bin/sh", "/smoke/smoke.sh"]
