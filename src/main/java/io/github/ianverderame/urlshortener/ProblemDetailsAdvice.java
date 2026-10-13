@@ -50,6 +50,11 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler
+  ProblemDetail requestBodyTooLarge(RequestBodyTooLargeException e) {
+    return problem(HttpStatus.CONTENT_TOO_LARGE, e.getMessage());
+  }
+
+  @ExceptionHandler
   ProblemDetail unauthenticated(AuthenticationException e) {
     return problem(
         HttpStatus.UNAUTHORIZED,

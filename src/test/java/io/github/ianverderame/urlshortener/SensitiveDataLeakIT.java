@@ -82,6 +82,27 @@ class SensitiveDataLeakIT {
     assertNoLeak(output.getAll());
   }
 
+  // #26: an unknown property's name and value stay out of the response and the logs.
+  @Test
+  void anUnknownPropertyLeaksNothing(CapturedOutput output) {
+    String unknown = "{\"destination\":\"" + URL + "\",\"s3cr3t-marker\":\"" + URL + "\"}";
+    String body = errorBody(create(TestApiKey.VALUE, MediaType.APPLICATION_JSON, unknown));
+
+    assertNoLeak(body);
+    assertNoLeak(output.getAll());
+  }
+
+  // #26: an oversized body's content stays out of the response and the logs.
+  @Test
+  void anOversizedBodyLeaksNothing(CapturedOutput output) {
+    String json = json(URL);
+    String oversized = json.substring(0, json.length() - 1) + " ".repeat(8 * 1024) + "}";
+    String body = errorBody(create(TestApiKey.VALUE, MediaType.APPLICATION_JSON, oversized));
+
+    assertNoLeak(body);
+    assertNoLeak(output.getAll());
+  }
+
   @Test
   void anUnsupportedContentTypeLeaksNothing(CapturedOutput output) {
     String body = errorBody(create(TestApiKey.VALUE, MediaType.TEXT_PLAIN, URL));
