@@ -32,6 +32,7 @@ class ApiDocsIT {
 
   private static final String CREATE = "$.paths['/api/v1/links'].post";
   private static final String REDIRECT = "$.paths['/{code}'].get";
+  private static final String STATS = "$.paths['/api/v1/links/{code}/stats'].get";
   private static final String PROBLEM_JSON = "application/problem+json";
   private static final String PROBLEM_DETAIL_REF = "#/components/schemas/ProblemDetail";
 
@@ -66,6 +67,13 @@ class ApiDocsIT {
         .exists()
         .jsonPath("$.paths['/{code}'].get")
         .exists();
+  }
+
+  // #8: the interactive docs list the stats endpoint.
+  @Test
+  void theOpenApiDescriptionListsStats() {
+    Object stats = apiDocs().read(STATS);
+    assertThat(stats).as("stats operation").isNotNull();
   }
 
   // The error controller is plumbing for the error contract, not part of the API.
@@ -136,6 +144,42 @@ class ApiDocsIT {
   @Test
   void redirectDocumentsNotFoundAsAProblemResponse() {
     assertProblemResponse(apiDocs(), REDIRECT, "404");
+  }
+
+  // #8: stats documents exactly 200, 400, 401 and 404, and the 200 carries the stats.
+  @Test
+  void statsDocumentsItsStatsAndItsErrorStatuses() {
+    DocumentContext docs = apiDocs();
+
+    Map<String, Object> responses = docs.read(STATS + ".responses");
+    assertThat(responses).containsOnlyKeys("200", "400", "401", "404");
+
+    List<String> refs = docs.read(STATS + ".responses['200'].content.*.schema['$ref']");
+    assertThat(refs).isNotEmpty().containsOnly("#/components/schemas/LinkStats");
+  }
+
+  // #8: each stats failure is a ProblemDetail as application/problem+json.
+  @Test
+  void statsDocumentsItsErrorsAsProblemResponses() {
+    DocumentContext docs = apiDocs();
+
+    for (String status : List.of("400", "401", "404")) {
+      assertProblemResponse(docs, STATS, status);
+    }
+  }
+
+  // #8: stats requires the API key, like create.
+  @Test
+  void statsRequiresTheApiKey() {
+    DocumentContext docs = apiDocs();
+    List<String> schemeNames = apiKeySchemeNames(docs);
+    assertThat(schemeNames).hasSize(1);
+    String scheme = schemeNames.get(0);
+
+    assertThat(effectiveSecurity(docs, STATS))
+        .as("stats security requirements")
+        .isNotEmpty()
+        .allSatisfy(requirement -> assertThat(requirement).containsKey(scheme));
   }
 
   // #17 constraint: the referenced schema is a real RFC 7807 problem detail.

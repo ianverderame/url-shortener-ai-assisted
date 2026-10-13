@@ -38,6 +38,11 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler
+  ProblemDetail invalidStatsRange(InvalidStatsRangeException e) {
+    return problem(HttpStatus.BAD_REQUEST, e.getMessage());
+  }
+
+  @ExceptionHandler
   ProblemDetail codeGenerationExhausted(CodeGenerationExhaustedException e) {
     return problem(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
   }
