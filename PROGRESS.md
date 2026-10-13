@@ -5,18 +5,19 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 ## Current
 
 - **Milestone:** Foundation
-- **Active issue:** #3 Quality gates and branch protection, branch `issue-3/quality-gates-s1`
-- **Done locally:** Spotless + google-java-format 1.36.1 (1.37.0 breaks in Spotless 3.10.4),
-  `-Xlint:all -Werror`, unit/IT stages (`-DskipUTs`), PIT report job, gitleaks 8.30.1 (exact
-  demo-key allowlist; scans `HEAD` history only), CodeQL, Dependabot, `CLAUDE.md` gates and
-  Subagent usage sections.
-- **Remaining:** push + PR; throwaway branch proving CI fails on format / warning / test /
-  secret (and a PIT artifact); branch protection on `main` (engineer runs it); direct-push and
-  red-check rejection demos; `pr-reviewer`.
+- **Active issue:** #3 Quality gates and branch protection. PR #13 is green and waiting for
+  engineer sign-off and merge. All acceptance criteria are verified there: throwaway PR #14
+  (closed) showed each gate failing and the PIT artifact; the direct push to `main` and the
+  merge with a red check were both rejected.
+- **After merge:** confirm that CodeQL runs on `main` and that Dependabot accepts its config.
 
 ## Recently completed
 
 - #2 AI guardrails, runnable skeleton, Spring Boot 4 setup checks (PR #12, merged).
+- #3 gates: google-java-format 1.36.1 via Spotless (1.37.0 breaks in Spotless 3.10.4),
+  `-Xlint:all -Werror`, unit and integration stages (`-DskipUTs`), PIT report job, gitleaks
+  8.30.1 (exact demo-key allowlist, `HEAD` history only), CodeQL, Dependabot. Branch protection
+  on `main`: PR plus 4 required checks, strict, enforced for admins.
 
 ## Up next
 
@@ -27,8 +28,9 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 
 - For #5: Spring Security applies on the management port. Permit health and `/error`
   explicitly, or the compose healthcheck, smoke test, and unknown-path errors break.
-- PIT writes no report until there is mutable code; #4 produces the first real one. In #4,
-  switch the `pit-report` upload to `if-no-files-found: error`.
+- In #4, switch the `pit-report` upload to `if-no-files-found: error` (no report until then).
 - If gitleaks flags the demo key in a new context, check the captured secret before touching the
   allowlist (it matches the exact literal only).
-- #6 adversarial URL table: drafted during #3 by `spec-test-designer`, to post on #6.
+- #6 adversarial URL table is posted on #6 (210 cases, 12 open questions for the engineer).
+- Required check names are in branch protection: renaming a CI job breaks merging until the
+  protection is updated.
