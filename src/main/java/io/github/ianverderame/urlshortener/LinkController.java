@@ -50,7 +50,8 @@ class LinkController {
               schema = @Schema(implementation = LinkResponse.class)))
   @ApiResponse(
       responseCode = "400",
-      description = "The body is malformed or the destination is rejected.",
+      description =
+          "The body is malformed, has an unknown property, or the destination is rejected.",
       content =
           @Content(
               mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
@@ -58,6 +59,13 @@ class LinkController {
   @ApiResponse(
       responseCode = "401",
       description = "The X-API-Key header is missing or wrong.",
+      content =
+          @Content(
+              mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+              schema = @Schema(implementation = ProblemDetail.class)))
+  @ApiResponse(
+      responseCode = "413",
+      description = "The body is larger than 8 KiB.",
       content =
           @Content(
               mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
