@@ -31,6 +31,10 @@ class PublicBaseUrl {
     if (uri.getHost() == null) {
       throw invalid("must include a host");
     }
+    // Otherwise every short URL the API returns would carry them.
+    if (uri.getRawUserInfo() != null) {
+      throw invalid("must not contain credentials");
+    }
     if (uri.getRawQuery() != null || uri.getRawFragment() != null) {
       throw invalid("must not have a query or fragment");
     }
