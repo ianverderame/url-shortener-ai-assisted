@@ -22,7 +22,7 @@ This starts PostgreSQL and the app. The app waits for the database, then becomes
 | Port | What | Reachable from |
 |---|---|---|
 | `8080` | Application API and interactive docs (`/swagger-ui/index.html`) | `127.0.0.1` only |
-| `8081` | Health (`/actuator/health/readiness`, `/actuator/health/liveness`) | `127.0.0.1` only |
+| `8081` | Health (`/actuator/health/readiness`, `/actuator/health/liveness`) and metrics (`/actuator/metrics`), no key needed | `127.0.0.1` only |
 
 PostgreSQL is not published to your machine.
 
@@ -83,6 +83,36 @@ what is stored, returned as `destination`, and sent in the redirect's `Location`
   compose that host is `localhost`, so every `localhost` destination is rejected locally. Another
   name for the same host (`127.0.0.1`, a DNS alias) is not detected, since no DNS lookups are
   made. That redirect loop is a known limitation.
+
+### Metrics and service-level objectives
+
+The built-in metrics endpoint is served on the management port only (the application port does
+not serve it), without a key. Health and metrics are the only actuator endpoints exposed.
+
+```bash
+curl http://127.0.0.1:8081/actuator/metrics                      # names of all meters
+curl http://127.0.0.1:8081/actuator/metrics/hikaricp.connections.timeout
+curl "http://127.0.0.1:8081/actuator/metrics/clicks.lost?tag=reason:write_failure"
+curl "http://127.0.0.1:8081/actuator/metrics/http.server.requests?tag=status:503"
+```
+
+Service-specific meters: `links.code.generation.exhausted` (link creation gave up after repeated
+code collisions) and `clicks.lost`, tagged `reason` (`overflow`, `write_failure`, `shutdown`).
+Request meters (`http.server.requests`) and the connection pool meters (`hikaricp.connections.*`)
+come from Spring Boot; the pool meters appear once the pool has started.
+
+These are the service's objectives (decided in
+[#9](https://github.com/ianverderame/url-shortener-ai-assisted/issues/9)) and how each is measured:
+
+| SLO | Target | Measured by |
+|---|---|---|
+| Bounded failure | 100% of API requests answer within 3 s with a `503` problem while the database is down or hung | Integration tests against a stopped or paused Testcontainers database ([#24](https://github.com/ianverderame/url-shortener-ai-assisted/issues/24)); `hikaricp.connections.timeout`, and `http.server.requests` with `status:503` |
+| Truthful readiness | Readiness reports `DOWN` within 2 s per probe while the database is unreachable, and `UP` within one probe interval after recovery | Integration test ([#24](https://github.com/ianverderame/url-shortener-ai-assisted/issues/24)); the compose healthcheck (3 s timeout) gets an answer instead of timing out |
+| Clean shutdown | 100% of SIGTERMs exit with code `143` inside the 30 s grace period, in every database state | A scripted or Testcontainers check of shutdown with a healthy and a hung database: exit code `143`, not `137` ([#27](https://github.com/ianverderame/url-shortener-ai-assisted/issues/27)) |
+| Analytics loss counted | Every lost click is counted by reason; the target ratio is set once a baseline is measured | `clicks.lost` (by `reason`) against clicks served: `http.server.requests` with `method:GET` and `status:302` (each redirect `GET` is one click) |
+
+The tests for the first three objectives arrive with the issues linked in the table; until then
+those objectives are targets, not yet verified.
 
 ### Stop
 

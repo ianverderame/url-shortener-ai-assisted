@@ -73,7 +73,7 @@ class HealthIT {
   }
 
   @Test
-  void managementPortExposesOnlyHealth() {
+  void managementPortDoesNotExposeEnv() {
     // The management port follows the same error contract as the application port.
     ErrorContractIT.assertProblem(management.get().uri("/actuator/env").exchange(), 404);
   }
