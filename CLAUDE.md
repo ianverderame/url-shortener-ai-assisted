@@ -47,7 +47,34 @@ Subagents (`.claude/agents/`):
 
 ## Spring Boot 4 idioms
 
-_Added as each item on the issue #2 verify-at-setup checklist is confirmed._
+Confirmed against Spring Boot 4.1.1 in issue #2. Don't use the Boot 3 equivalents.
+
+- **Starters are modular:** `spring-boot-starter-webmvc` (not `-web`), `-actuator`, `-flyway`;
+  test starters are per module: `spring-boot-starter-webmvc-test`, `-actuator-test`,
+  `-flyway-test`.
+- **Flyway on PostgreSQL** needs `spring-boot-starter-flyway` plus `flyway-database-postgresql`.
+- **Jackson 3** is the default: packages are `tools.jackson.*`, not `com.fasterxml.jackson.*`
+  (annotations stay in `com.fasterxml.jackson.annotation`). `ProblemDetail` serializes as flat
+  RFC 7807 JSON; custom properties appear at the top level.
+- **Testcontainers 2.x:** artifacts `testcontainers-postgresql`, `testcontainers-junit-jupiter`;
+  class `org.testcontainers.postgresql.PostgreSQLContainer` (not generic). Wire it with
+  `@ServiceConnection`. Pin the image tag to match `compose.yaml`.
+- **HTTP tests:** `RestTestClient` (`org.springframework.test.web.servlet.client`), included in
+  `spring-boot-starter-webmvc-test`. Not `TestRestTemplate` (it needs an extra module).
+  Ports: `@LocalServerPort`, `@LocalManagementPort` (`org.springframework.boot.test.web.server`).
+- **Mocks:** `@MockitoBean` / `@MockitoSpyBean`. `@MockBean` no longer exists in Boot 4.
+- **Integration tests** are named `*IT` and run by failsafe in `./mvnw verify`.
+- **Spring Security 7:** lambda DSL only; match paths with
+  `PathPatternRequestMatcher.withDefaults().matcher(...)`. Security **does** apply on the separate
+  management port: health must be explicitly permitted there, or the compose healthcheck and smoke
+  test break. Permit `/error` too, or unknown paths under a `permitAll()` rule return 401.
+- **springdoc-openapi 3.1.x** targets Boot 4.1.
+- **Compiler lint:** a one-off `-Xlint:all -Werror` compile was clean with no exclusions. It is
+  not enforced by the build yet (issue #3 adds that gate). If an annotation processor is ever
+  added, set `-proc` explicitly instead of excluding the `processing` lint.
+- **PIT** 1.30.0 with `pitest-junit5-plugin` 1.2.3 runs on Boot's JUnit 6 (it resolves the
+  platform launcher at runtime).
+- **Postgres 18 images** keep data under `/var/lib/postgresql` (not `.../data`).
 
 ## Limits of these guardrails
 
