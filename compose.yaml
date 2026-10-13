@@ -1,0 +1,59 @@
+name: url-shortener
+
+services:
+  postgres:
+    image: postgres:18.6-alpine3.24
+    environment:
+      POSTGRES_DB: urlshortener
+      POSTGRES_USER: urlshortener
+      POSTGRES_PASSWORD: local-demo-password # local demo only, not a secret
+      TZ: UTC
+    # Not published to the host: only the app reaches it, over the compose network.
+    volumes:
+      - pgdata:/var/lib/postgresql # Postgres 18+ volume path (not .../data)
+    healthcheck:
+      # TCP, not the socket: during first-run init a temporary server answers on the socket only.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "urlshortener", "-d", "urlshortener"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/urlshortener
+      SPRING_DATASOURCE_USERNAME: urlshortener
+      SPRING_DATASOURCE_PASSWORD: local-demo-password
+      # PUBLISHED LOCAL DEMO KEY - NOT A SECRET. Local use only; a startup guard that rejects it
+      # outside the `local` profile arrives with authentication (issue #5).
+      APP_API_KEY: local-demo-key-NOT-A-SECRET-do-not-use-elsewhere
+    ports:
+      # Loopback only: the published demo key must never be usable from the network.
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8081" # management (health) port
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
+      start_interval: 2s
+    stop_grace_period: 30s
+
+  # One-shot end-to-end check: `docker compose run --rm smoke`. Not started by `up`.
+  smoke:
+    image: curlimages/curl:8.22.0
+    profiles: ["smoke"]
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./smoke:/smoke:ro
+    entrypoint: ["/bin/sh", "/smoke/smoke.sh"]
+
+volumes:
+  pgdata:

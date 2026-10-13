@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and test (./mvnw verify)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          # Temurin 21.0.12.1+1 (same build as the Docker images). setup-java needs the exact
+          # Adoptium semver when a build suffix is given.
+          java-version: "21.0.12+101.0.LTS"
+          cache: maven
+      - name: Verify (unit + Testcontainers integration tests)
+        run: ./mvnw -B -ntp verify
+
+  reviewer-path:
+    name: Reviewer path (compose up + smoke)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Start the stack and wait until healthy
+        run: docker compose up --build --wait --wait-timeout 180
+      - name: Smoke test
+        run: docker compose run --rm smoke
+      - name: Exposure and runtime user
+        run: |
+          pg=$(docker port "$(docker compose ps -q postgres)")
+          echo "postgres published: [$pg]"
+          test -z "$pg"
+          app_ports=$(docker port "$(docker compose ps -q app)")
+          echo "app published: [$app_ports]"
+          test -n "$app_ports"
+          if echo "$app_ports" | grep -v -- '-> 127\.0\.0\.1:'; then echo "app ports must bind 127.0.0.1 only"; exit 1; fi
+          uid=$(docker compose exec -T app id -u)
+          echo "app uid: $uid"
+          test "$uid" != "0"
+      - name: Clean shutdown via SIGTERM (exit 143, not SIGKILL 137)
+        run: |
+          id=$(docker compose ps -q app)
+          docker compose stop app
+          code=$(docker inspect "$id" --format '{{.State.ExitCode}}')
+          echo "app exit code: $code"
+          test "$code" = "143"
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
