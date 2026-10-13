@@ -9,7 +9,7 @@ finding and how it was triaged.
 | Issue | What it delivered | PR |
 |---|---|---|
 | [#7](https://github.com/ianverderame/url-shortener-ai-assisted/issues/7) Review of `v0.1.0` | A fresh-context bug hunt, edge-case fixes with regression tests, the mutation threshold raised 80% → 85% and enforced | [#21](https://github.com/ianverderame/url-shortener-ai-assisted/pull/21) |
-| [#8](https://github.com/ianverderame/url-shortener-ai-assisted/issues/8) Click capture and stats | Asynchronous click recording on the redirect path, and `GET /api/v1/links/{code}/stats` with UTC daily counts | PR for #8 |
+| [#8](https://github.com/ianverderame/url-shortener-ai-assisted/issues/8) Click capture and stats | Asynchronous click recording on the redirect path, and `GET /api/v1/links/{code}/stats` with UTC daily counts | [#30](https://github.com/ianverderame/url-shortener-ai-assisted/pull/30) |
 
 ## Decomposition
 
