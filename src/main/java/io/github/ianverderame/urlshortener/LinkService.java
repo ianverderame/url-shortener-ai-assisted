@@ -3,7 +3,6 @@ package io.github.ianverderame.urlshortener;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -28,6 +27,7 @@ class LinkService {
   private final JdbcClient jdbcClient;
   private final TransactionOperations transactions;
   private final ShortCodeGenerator shortCodeGenerator;
+  private final DestinationPolicy destinationPolicy;
   private final Clock clock;
   private final Counter exhaustionCounter;
 
@@ -35,11 +35,13 @@ class LinkService {
       JdbcClient jdbcClient,
       TransactionOperations transactions,
       ShortCodeGenerator shortCodeGenerator,
+      DestinationPolicy destinationPolicy,
       Clock clock,
       MeterRegistry meterRegistry) {
     this.jdbcClient = jdbcClient;
     this.transactions = transactions;
     this.shortCodeGenerator = shortCodeGenerator;
+    this.destinationPolicy = destinationPolicy;
     this.clock = clock;
     this.exhaustionCounter =
         Counter.builder(EXHAUSTION_METRIC)
@@ -48,11 +50,12 @@ class LinkService {
   }
 
   /**
-   * Inserts the link under a fresh code. Each attempt runs in its own transaction, and only a code
-   * conflict (an empty {@code RETURNING}) leads to another attempt.
+   * Inserts the link under a fresh code, storing the policy's normalized destination. Each attempt
+   * runs in its own transaction, and only a code conflict (an empty {@code RETURNING}) leads to
+   * another attempt.
    */
-  Link create(String destination) {
-    validate(destination);
+  Link create(String submitted) {
+    String destination = destinationPolicy.normalize(submitted);
     for (int attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
       String code = shortCodeGenerator.generate();
       Instant createdAt = Instant.now(clock);
@@ -80,26 +83,6 @@ class LinkService {
         .param("createdAt", OffsetDateTime.ofInstant(createdAt, ZoneOffset.UTC))
         .query(Link.class)
         .optional();
-  }
-
-  /** Minimal check for the tracer bullet: http(s) with a host. The full policy is issue #6. */
-  private static void validate(String destination) {
-    if (destination == null) {
-      throw new InvalidDestinationException("Destination is required.");
-    }
-    URI uri;
-    try {
-      uri = new URI(destination);
-    } catch (URISyntaxException e) {
-      throw new InvalidDestinationException("Destination is not a valid URL.");
-    }
-    String scheme = uri.getScheme();
-    if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
-      throw new InvalidDestinationException("Destination scheme must be http or https.");
-    }
-    if (uri.getHost() == null) {
-      throw new InvalidDestinationException("Destination must include a host.");
-    }
   }
 
   Optional<Link> resolve(String code) {

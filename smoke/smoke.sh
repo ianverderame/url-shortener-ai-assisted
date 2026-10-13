@@ -41,6 +41,14 @@ status=$(printf '%s\n' "$headers" | head -n 1 | cut -d ' ' -f 2)
 [ "$(header "$headers" Location)" = "$DESTINATION" ] || fail "Location is not the destination"
 [ "$(header "$headers" Cache-Control)" = "no-store" ] || fail "Cache-Control is not no-store"
 
+echo "Creating a link to a rejected destination..."
+rejected=$(curl -sS -w '\n%{http_code}' -X POST "$APP_URL/api/v1/links" \
+  -H "X-API-Key: $APP_API_KEY" -H 'Content-Type: application/json' \
+  -d '{"destination":"https://trusted.example@evil.example/"}') || fail "rejected-create request failed"
+status=$(printf '%s\n' "$rejected" | tail -n 1)
+[ "$status" = "400" ] || fail "a userinfo destination returned $status, expected 400"
+printf '%s\n' "$rejected" | grep -q '"reason":"USERINFO_NOT_ALLOWED"' || fail "the 400 does not carry reason USERINFO_NOT_ALLOWED"
+
 echo "Checking an unknown code..."
 status=$(curl -sS -o /dev/null -w '%{http_code}' "$APP_URL/Zz9Zz9Zz") || fail "unknown-code request failed"
 # This fixed code could in theory have been generated earlier; with 62^8 codes that is negligible.
