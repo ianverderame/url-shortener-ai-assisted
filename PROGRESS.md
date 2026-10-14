@@ -4,8 +4,9 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 
 ## Current
 
-- **Active issue:** none. v1.0 is complete: every PRD (#1) requirement is met
-  (`docs/requirements-coverage.md`), and `v1.0.0` tags the close-out's (#44) merge commit.
+- **Active issue:** none. v1.0 is complete: every PRD (#1) requirement is met or its gap is
+  documented (`docs/requirements-coverage.md`), and `v1.0.0` tags the close-out's (#44) merge
+  commit.
 
 ## Recently completed
 
