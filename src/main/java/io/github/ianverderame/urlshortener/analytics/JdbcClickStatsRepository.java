@@ -34,8 +34,9 @@ class JdbcClickStatsRepository implements ClickStatsRepository {
         .param("start", startOfDay(from))
         .param("end", startOfDay(to.plusDays(1)))
         .query(
-            (rs, rowNum) -> counts.put(rs.getObject("day", LocalDate.class), rs.getLong("clicks")))
-        .list();
+            rs -> {
+              counts.put(rs.getObject("day", LocalDate.class), rs.getLong("clicks"));
+            });
     return counts;
   }
 
