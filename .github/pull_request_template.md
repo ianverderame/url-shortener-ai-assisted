@@ -47,7 +47,7 @@ Closes #
 
 ## High-impact sign-off
 
-<!-- Tick each area this PR touches. Each needs the engineer's explicit sign-off. -->
+**Areas this PR touches** (the author ticks these; untouched areas stay unticked):
 
 - [ ] Schema migration
 - [ ] Security or authentication configuration
@@ -56,7 +56,9 @@ Closes #
 - [ ] CI workflow
 - [ ] AI configuration (`CLAUDE.md`, `.claude/`)
 
-Engineer sign-off: <!-- name, and what was checked -->
+**Engineer sign-off** (the engineer ticks this, and replaces the text after the colon with what was checked):
+
+- [ ] Engineer sign-off: _name, and what was checked in each area ticked above_
 
 ## Ownership attestation
 
