@@ -131,10 +131,10 @@ reliability requirements). The evidence and every decision are recorded on
   `MetricsIT`'s 21 cases failed. With the body-limit filter unwired, the raw chunked-body test got
   a `201`.
 - **Review findings were checked, not taken on authority.** `pr-reviewer`'s claim that readiness
-  could exceed 2 s didn't reproduce (about 1.51 s measured). The timeouts were tightened anyway, which
-  brings the worst case for borrowing a connection to 1.5 s (1 s connection timeout plus 0.5 s
-  validation, written down in `application.properties`). The `server.shutdown` claim was disproved from the bytecode, as noted
-  under Execution.
+  could exceed 2 s didn't reproduce (about 1.51 s measured). The timeouts were tightened anyway,
+  which brings the worst case for borrowing a connection to 1.5 s (1 s connection timeout plus
+  0.5 s validation, written down in `application.properties`). The `server.shutdown` claim was
+  disproved from the bytecode, as noted under Execution.
 - **Mutation score held at 89%** (threshold 85%) through #24, #25 and #26.
 - **Known gaps, stated plainly:**
   - #24's `503` and readiness bounds were tested against Testcontainers, not against an outage of
@@ -142,7 +142,8 @@ reliability requirements). The evidence and every decision are recorded on
     asserts it.
   - The main context's 7 s shutdown share is configured but has never been tested with a bean
     that hangs, the way the management context's 3 s was.
-  - Recovery after a real database stop and start isn't tested; only pause and resume is.
+  - Recovery after a real database stop and start has no automated test; only pause and resume
+    does. (It was later verified by hand in #10.)
   - The just-used-connection path (above) isn't exercised.
   - The click drain and the loss-ratio target were not built (#28, above).
   - Rate limiting was rejected for now.

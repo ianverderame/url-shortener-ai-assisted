@@ -4,34 +4,31 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 
 ## Current
 
-- **Active issue:** #39 review cleanup (`issue-39/review-cleanup-s1`), the second freeze exception
-  after #35. Small readability fixes; create's transaction stays, and the reason it exists (a `503`
-  stores nothing) is now written down. Removing it was proposed and rejected.
+- **Active issue:** #10 wrap-up docs (`issue-10/wrap-up-docs-s1`), docs only. Five new docs in
+  `docs/`; README polished; `reviewer-simulator` passed (6 frictions fixed). Next: review, PR.
 
 ## Recently completed
 
-- #9 Ambiguous scenario closed (PR #38): `03-ambiguous.md` complete; #28 (click drain) descoped.
-- #35 Feature packages (PR #37); the main scan excludes `@ManagementContextConfiguration` classes.
+- #41 Demo page (PR #42): static page at `/`; third freeze exception; relaxes PRD's "no UI" (#1).
+- #39 Review cleanup (PR #40): readability fixes; create's transaction stays (a `503` stores nothing).
 
 ## Up next
 
-- Path to done: #39 → #10. **Backlog frozen:** new findings go on the list below unless they break
-  the active issue's criteria or an approved SLO.
+- Path to done: #10 only. **Backlog frozen:** new findings go below unless they break an SLO.
 - Future work (#10's limitations; details in `03-ambiguous.md` and the PRs):
-  - #28's click drain and loss-ratio target. Untested: main's 7 s shutdown share with a hanging
-    bean, DB recovery after a real stop/start, the just-used-connection 2.5 s path, three
-    stats-range details (#35).
-  - #31 form bodies parsed before the key check; test logs show `-06:00`, not UTC; a Flyway
-    timeout; log a replaced exception's type; log-capture ITs see all threads; no package-boundary
-    enforcement (Spring Modulith); rate limiting (rejected on #9). Click writes are autocommitted,
-    so `clicks.lost{reason=write_failure}` can overcount after a hang (#39).
-  - Scaling path (#39): cache redirect lookups (links never change); batch click writes; a daily
-    stats rollup (raw aggregation under the 1 s socket timeout); shared IT contexts (each class's
-    `@DynamicPropertySource` gives it its own context and Postgres).
+  - #28's click drain and loss-ratio target. Untested: main's 7 s shutdown share, the
+    just-used-connection 2.5 s path, three stats-range details. DB stop/start recovery: manual only.
+  - Manual run: wrong-length code `404` says "No static resource"; OpenAPI problem schema nests
+    `properties`; its `503` omits DB outage. Demo page: no browser test; hard-codes 8081.
+    Performance: guarded, not measured; next step a query-plan (index) test. The PIT job is
+    still named "report-only" though it fails below 85%, and isn't a required check.
+  - #31 form bodies before the key check; test logs `-06:00`; a Flyway timeout; log a replaced
+    exception's type; log capture sees all threads; no Spring Modulith; rate limiting (rejected
+    on #9); click writes autocommit, so `write_failure` can overcount after a hang.
+  - Scaling path (#39): redirect cache; batched click writes; daily stats rollup; shared IT contexts.
 
 ## Carry-forward notes
 
-- `main` is protected (PR only); renaming a CI job breaks branch protection's required checks.
-- New ITs need `TestApiKey` via `@DynamicPropertySource`. PIT counts unit tests only: never lower
-  `mutationThreshold`. Async tests: `TestExecutorService`, `@Primary` recorder/writer beans.
-- CSRF stays off only while auth is header-only. Destination policy: PR #20. Packages: `CLAUDE.md`.
+- `main` is protected; renaming a CI job breaks the required checks. Never lower `mutationThreshold`.
+- New ITs need `TestApiKey` via `@DynamicPropertySource`. Both checkouts share compose project
+  `url-shortener`: check `docker ps` first. CSRF stays off only while auth is header-only.

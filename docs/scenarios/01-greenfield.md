@@ -24,9 +24,9 @@ finding and how it was triaged.
 - **Guardrails before code.** #2's first commit held only AI configuration: project rules,
   tool-permission rules, and three subagents with narrow jobs. The skeleton came in a second commit,
   so the rules were in force for every line of application code.
-- **Gates before features.** #3 made formatting, compiler warnings, tests, secret scanning, CodeQL
-  and mutation testing required checks before the first feature (#4), so no feature work could
-  skip them. #11 was found during #3 and split out rather than folded in.
+- **Gates before features.** #3 made formatting, compiler warnings, tests, secret scanning and CodeQL
+  required checks before the first feature (#4), so no feature work could skip them. Mutation
+  testing runs in CI too, as a job that fails below its threshold. #11 was found during #3 and split out rather than folded in.
 - **A tracer bullet, then hardening.** #4 was deliberately minimal (a basic key check and a
   scheme-plus-host check) to prove the path from request to database to redirect. #5 and #6
   hardened the two security boundaries separately, so each could be reviewed on its own.
@@ -62,8 +62,9 @@ finding and how it was triaged.
   duplicate code removed, so all 111 mutants in the URL policy are killed.
 - **Independent review before the engineer's.** `pr-reviewer` reviewed every PR against its
   issue and `CLAUDE.md`. It found real defects: a raw-URI path that bypassed the key check (#4), a
-  fail-open 401 path (#5), and wrong rejection reasons for inputs with userinfo but no host (#6). Every finding was triaged in the PR as fixed, rejected with a reason,
-  or deferred to a named issue.
+  fail-open 401 path (#5), and wrong rejection reasons for inputs with userinfo but no host (#6).
+  Every finding was triaged in the PR as fixed, rejected with a reason, or deferred to a named
+  issue.
 - **False positives were checked, not waved through.** The CodeQL CSRF alert on #5 was dismissed
   only after `CsrfAssumptionsIT` pinned the assumptions that make disabled CSRF safe
   (header-only auth, no cookies or sessions).
@@ -80,5 +81,5 @@ finding and how it was triaged.
   implementation, and the constrained output reproduced the same 7 wrong reasons.
   [PR #20](https://github.com/ianverderame/url-shortener-ai-assisted/pull/20) has both prompts
   and the full results.
-- **The engineer reviews and merges every PR**, and tags `main` as `v0.1.0` after #6 merges. This
-  baseline is the starting point for the brownfield (#7, #8) and ambiguity (#9) scenarios.
+- **The engineer reviewed and merged every PR**, and tagged `main` as `v0.1.0` after #6 merged.
+  That baseline is the starting point for the brownfield (#7, #8) and ambiguous (#9) scenarios.
