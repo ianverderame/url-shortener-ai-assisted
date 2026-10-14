@@ -9,7 +9,11 @@ control that matters. Enforced rules live in `.claude/settings.json`; see "Limit
 URL shortener service: Java 21, Spring Boot 4.1.x, PostgreSQL, Maven wrapper, Docker Compose.
 Requirements: the PRD (GitHub issue #1). Work items: GitHub Issues. Current state: `PROGRESS.md`.
 
-- Base package: `io.github.ianverderame.urlshortener`
+- Base package: `io.github.ianverderame.urlshortener`, one sub-package per feature (#35): `link`,
+  `redirect`, `analytics`, `security`, plus `web` (HTTP concerns shared by every endpoint) and
+  `management` (management-context configuration). Each `package-info.java` says what the package
+  holds and may depend on; no cycles. Types stay package-private unless another package needs
+  them. Tests mirror these packages; cross-cutting ITs and shared test support stay at the root.
 - Persistence: plain JDBC (`JdbcClient`), not JPA. Flyway migrations are additive only.
 - Time: UTC everywhere (JVM, container, SQL). Inject a `Clock`; never sleep in tests.
 - Errors: RFC 7807 problem responses for every failure.
@@ -108,6 +112,10 @@ Confirmed against Spring Boot 4.1.1 in issue #2. Don't use the Boot 3 equivalent
 - **PIT** 1.30.0 with `pitest-junit5-plugin` 1.2.3 runs on Boot's JUnit 6 (it resolves the
   platform launcher at runtime).
 - **Postgres 18 images** keep data under `/var/lib/postgresql` (not `.../data`).
+- **Management-context configuration** (`@ManagementContextConfiguration`, for the separate
+  actuator port) is registered only through `META-INF/spring/...ManagementContextConfiguration.imports`.
+  `UrlShortenerApplication` spells out `@SpringBootApplication` to exclude these classes from the
+  main component scan (`ManagementContextScanIT`); keep Boot's two default exclude filters there.
 
 ## Limits of these guardrails
 

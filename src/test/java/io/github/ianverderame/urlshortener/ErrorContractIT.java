@@ -26,11 +26,11 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Issue #5: every error class comes back as {@code application/problem+json} with type, title, and
  * status, including errors raised outside the controllers. The 503 case needs a scripted code
- * generator and lives in {@link LinkCreationCollisionIT}.
+ * generator and lives in {@code link.LinkCreationCollisionIT}.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
-class ErrorContractIT {
+public class ErrorContractIT {
 
   private static final String VALID_BODY = "{\"destination\":\"https://example.com/some/path\"}";
 
@@ -156,7 +156,7 @@ class ErrorContractIT {
     }
   }
 
-  static void assertProblem(RestTestClient.ResponseSpec response, int status) {
+  public static void assertProblem(RestTestClient.ResponseSpec response, int status) {
     response
         .expectStatus()
         .isEqualTo(status)

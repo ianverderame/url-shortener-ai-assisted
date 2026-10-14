@@ -42,5 +42,4 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 - Async tests: `TestExecutorService` and `@Primary` `ClickRecorder` / `ClickEventWriter` beans.
 - CSRF stays off only while auth is header-only: cookie/session auth or CORS means re-enabling it.
 - Destination policy decisions (Q1–Q12, PD-07 as `MISSING_HOST`) are recorded in PR #20.
-- Management-context classes go in `META-INF/spring/...ManagementContextConfiguration.imports`
-  only; the main component scan excludes them by annotation (`UrlShortenerApplication`).
+- Package layout and the management-context scan rule are in `CLAUDE.md` (#35).
