@@ -4,33 +4,27 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 
 ## Current
 
-- **Milestone:** Ambiguous scenario. #9's decisions and SLOs are approved (PR #29,
-  `docs/scenarios/03-ambiguous.md`). Rate limiting rejected for now.
-- **Active issue:** #35 organize into packages (branch `issue-35/package-refactor-s1`, PR pending).
-  Feature packages `link`, `redirect`, `analytics`, `security`, plus `web` and `management`, each
-  with a `package-info.java` (decisions on #35). The main scan excludes
-  `@ManagementContextConfiguration` classes, so #27's `OnChildApplicationContextCondition` is gone.
-  Other packages read links through `LinkLookup`; the service's own errors extend
-  `web.ProblemException`, so `web` knows no feature. Exact problem bodies are pinned in
-  `ErrorContractIT`, `LinkCreationCollisionIT` (503) and `RequestBodyLimitIT` (413).
+- **Active issue:** #9 close-out (branch `issue-9/scenario-closeout-s2`): Execution and Validation
+  in `docs/scenarios/03-ambiguous.md`. #24 to #27 are merged; #28 (click drain) was descoped.
 
 ## Recently completed
 
-- #27 Shutdown inside the grace period (PR #36). Management context's shutdown phase set to 3 s
-  explicitly (`ManagementShutdownConfiguration`); main gets 7 s.
-- #24 DB fail-fast and bounded readiness (PR #34). `503` ≤ 3 s, one log line; readiness ≤ 2 s.
+- #35 Feature packages (PR #37); the main scan excludes `@ManagementContextConfiguration` classes.
+- #27 Shutdown inside the grace period (PR #36): management phase 3 s, main 7 s.
+- #24 DB fail-fast and bounded readiness (PR #34): `503` ≤ 3 s, readiness ≤ 2 s.
 
 ## Up next
 
-- Path to done: #35 (this session) → close #9 → #10. **Backlog frozen:** a new finding becomes an
-  issue only if it breaks the active issue's criteria or an approved SLO; otherwise it goes on
-  #10's future-work list below.
-- Future work (for #10's limitations section): #31 form bodies parsed before the key check
-  (unreproduced). Test JVM logs show `-06:00`, not UTC. From #24's review: a Flyway-specific
-  timeout; a readiness recovery test after a real DB stop/start; log the original exception's type
-  when a failed rollback replaces it; log-capture ITs could pick up an unrelated thread's WARN.
-  From #35: package boundaries aren't enforced (Spring Modulith `verify()`); three stats-range
-  details (after today, before 0001-01-01, over 366 days) aren't asserted by any test.
+- Path to done: close #9 (this session) → #10. **Backlog frozen:** a finding becomes an issue only
+  if it breaks the active issue's criteria or an approved SLO; otherwise it goes on the list below.
+- Future work (#10's limitations section; details in `03-ambiguous.md` and the PRs):
+  - #28's click drain and the loss-ratio target. `ClickRecorder.shutdown()`'s Javadoc still says
+    the drain is #9.
+  - Untested: main's 7 s shutdown share with a hanging bean; DB recovery after a real stop/start;
+    the just-used-connection 2.5 s path; three stats-range details (#35).
+  - #31 form bodies parsed before the key check; test JVM logs show `-06:00`, not UTC; a
+    Flyway-specific timeout; log a replaced exception's type; log-capture ITs see all threads;
+    package boundaries not enforced (Spring Modulith); rate limiting (rejected on #9).
 
 ## Carry-forward notes
 
@@ -39,4 +33,4 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
   `mutationThreshold`, add unit tests at seams.
 - Async tests: `TestExecutorService` and `@Primary` `ClickRecorder` / `ClickEventWriter` beans.
 - CSRF stays off only while auth is header-only. Destination policy decisions: PR #20. Package
-  layout and the management-context scan rule: `CLAUDE.md` (#35).
+  layout rules: `CLAUDE.md` (#35).
