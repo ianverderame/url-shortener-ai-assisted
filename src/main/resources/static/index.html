@@ -41,7 +41,8 @@
   <label for="key">X-API-Key</label>
   <input id="key" type="password" autocomplete="off" spellcheck="false">
   <p class="hint">Creating links and reading stats need the key. Under <code>docker compose</code>,
-    paste the local demo key from the README. It is kept only in this page's memory.</p>
+    paste the local demo key from the README. The page keeps it in memory only, though your
+    browser may offer to save it as a password.</p>
 </section>
 
 <section>
@@ -97,8 +98,8 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
 
-  // management.server.port in application.properties (and compose.yaml).
-  const managementBase =location.protocol + "//" + location.hostname + ":8081";
+  // management.server.port in application.properties; compose.yaml publishes the same port.
+  const managementBase = location.protocol + "//" + location.hostname + ":8081";
   $("readiness").href = managementBase + "/actuator/health/readiness";
   $("metrics").href = managementBase + "/actuator/metrics";
 
@@ -149,6 +150,9 @@
         $("short-url").href = result.json.shortUrl;
         $("short-url").textContent = result.json.shortUrl;
         $("code").value = result.json.code;
+        // The stats shown belong to the previous link.
+        $("stats-summary").replaceChildren();
+        $("stats-result").replaceChildren();
       }
     } catch (e) { showFailure($("create-result"), e); }
   });
@@ -164,7 +168,7 @@
 
   function renderStats(stats) {
     const total = document.createElement("p");
-    total.textContent = "Total clicks from " + stats.from + " to " + stats.to + ": " + stats.total;
+    total.textContent = "Total clicks on " + stats.code + " from " + stats.from + " to " + stats.to + ": " + stats.total;
     const nodes = [total];
     // The response lists every day in the range; the table shows only days with clicks.
     const days = stats.days.filter((day) => day.clicks > 0);

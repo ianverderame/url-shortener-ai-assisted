@@ -80,10 +80,16 @@ class DemoPageIT {
             "innerHTML",
             "outerHTML",
             "insertAdjacentHTML",
+            "setHTMLUnsafe",
+            "createContextualFragment",
+            "DOMParser",
             "document.write",
             "document.cookie",
+            "cookieStore",
             "localStorage",
-            "sessionStorage");
+            "sessionStorage",
+            "indexedDB",
+            "caches");
   }
 
   private String demoPage() {
