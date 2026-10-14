@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -26,11 +27,11 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Issue #5: every error class comes back as {@code application/problem+json} with type, title, and
  * status, including errors raised outside the controllers. The 503 case needs a scripted code
- * generator and lives in {@link LinkCreationCollisionIT}.
+ * generator and lives in {@code link.LinkCreationCollisionIT}.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
-class ErrorContractIT {
+public class ErrorContractIT {
 
   private static final String VALID_BODY = "{\"destination\":\"https://example.com/some/path\"}";
 
@@ -48,19 +49,6 @@ class ErrorContractIT {
   @BeforeEach
   void setUp() {
     app = RestTestClient.bindToServer().baseUrl("http://localhost:" + serverPort).build();
-  }
-
-  @Test
-  void anInvalidDestinationIsAValidationProblem() {
-    RestTestClient.ResponseSpec response =
-        app.post()
-            .uri("/api/v1/links")
-            .header("X-API-Key", TestApiKey.VALUE)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body("{\"destination\":\"ftp://example.com/some/path\"}")
-            .exchange();
-
-    assertProblem(response, 400);
   }
 
   @Test
@@ -89,11 +77,6 @@ class ErrorContractIT {
   }
 
   @Test
-  void anUnknownCodeIsANotFoundProblem() {
-    assertProblem(app.get().uri("/Zz9Zz9Zz").exchange(), 404);
-  }
-
-  @Test
   void anUnmatchedRouteIsANotFoundProblem() {
     assertProblem(app.get().uri("/no/such/route").exchange(), 404);
   }
@@ -117,6 +100,92 @@ class ErrorContractIT {
             .exchange();
 
     assertProblem(response, 415);
+  }
+
+  // The service's own problems, field for field (#35): nothing missing and nothing extra, so where
+  // they are mapped can't change a response.
+  @Test
+  void aPolicyRejectionHasItsFixedDetailAndReason() {
+    RestTestClient.ResponseSpec response =
+        app.post()
+            .uri("/api/v1/links")
+            .header("X-API-Key", TestApiKey.VALUE)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body("{\"destination\":\"ftp://example.com/some/path\"}")
+            .exchange();
+
+    assertExactProblem(
+        response,
+        400,
+        """
+        {"type": "about:blank", "title": "Bad Request", "status": 400,
+         "detail": "Destination scheme must be http or https.", "instance": "/api/v1/links",
+         "reason": "UNSUPPORTED_SCHEME"}
+        """);
+  }
+
+  @Test
+  void aMissingDestinationHasItsFixedDetailAndNoReason() {
+    RestTestClient.ResponseSpec response =
+        app.post()
+            .uri("/api/v1/links")
+            .header("X-API-Key", TestApiKey.VALUE)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body("{}")
+            .exchange();
+
+    assertExactProblem(
+        response,
+        400,
+        """
+        {"type": "about:blank", "title": "Bad Request", "status": 400,
+         "detail": "Destination is required.", "instance": "/api/v1/links"}
+        """);
+  }
+
+  @Test
+  void anUnknownCodeHasItsFixedDetail() {
+    assertExactProblem(
+        app.get().uri("/Zz9Zz9Zz").exchange(),
+        404,
+        """
+        {"type": "about:blank", "title": "Not Found", "status": 404,
+         "detail": "No link has this code.", "instance": "/Zz9Zz9Zz"}
+        """);
+  }
+
+  @Test
+  void statsForAnUnknownCodeHaveTheSameDetail() {
+    RestTestClient.ResponseSpec response =
+        app.get()
+            .uri("/api/v1/links/Zz9Zz9Zz/stats")
+            .header("X-API-Key", TestApiKey.VALUE)
+            .exchange();
+
+    assertExactProblem(
+        response,
+        404,
+        """
+        {"type": "about:blank", "title": "Not Found", "status": 404,
+         "detail": "No link has this code.", "instance": "/api/v1/links/Zz9Zz9Zz/stats"}
+        """);
+  }
+
+  @Test
+  void anInvalidStatsRangeHasItsFixedDetail() {
+    RestTestClient.ResponseSpec response =
+        app.get()
+            .uri("/api/v1/links/Zz9Zz9Zz/stats?from=2020-01-02&to=2020-01-01")
+            .header("X-API-Key", TestApiKey.VALUE)
+            .exchange();
+
+    assertExactProblem(
+        response,
+        400,
+        """
+        {"type": "about:blank", "title": "Bad Request", "status": 400,
+         "detail": "'from' must not be after 'to'.", "instance": "/api/v1/links/Zz9Zz9Zz/stats"}
+        """);
   }
 
   // Tomcat rejects these before any servlet runs, so Spring's error handling never sees them. Sent
@@ -156,7 +225,7 @@ class ErrorContractIT {
     }
   }
 
-  static void assertProblem(RestTestClient.ResponseSpec response, int status) {
+  public static void assertProblem(RestTestClient.ResponseSpec response, int status) {
     response
         .expectStatus()
         .isEqualTo(status)
@@ -169,5 +238,17 @@ class ErrorContractIT {
         .isNotEmpty()
         .jsonPath("$.status")
         .isEqualTo(status);
+  }
+
+  /** The whole problem body, field for field: nothing missing and nothing extra. */
+  public static void assertExactProblem(
+      RestTestClient.ResponseSpec response, int status, String expectedJson) {
+    response
+        .expectStatus()
+        .isEqualTo(status)
+        .expectHeader()
+        .contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+        .expectBody()
+        .json(expectedJson, JsonCompareMode.STRICT);
   }
 }

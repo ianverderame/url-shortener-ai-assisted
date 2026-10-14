@@ -1,1 +1,2 @@
-io.github.ianverderame.urlshortener.HangingManagementBeanConfig
+io.github.ianverderame.urlshortener.management.HangingManagementBeanConfig
+io.github.ianverderame.urlshortener.management.ManagementScanProbeConfig

@@ -8,13 +8,13 @@ import org.springframework.test.context.DynamicPropertyRegistry;
  * The API key integration tests run with: generated per test JVM, so no test key lives in the repo.
  * Test classes register it with {@code @DynamicPropertySource}.
  */
-final class TestApiKey {
+public final class TestApiKey {
 
-  static final String VALUE = generate();
+  public static final String VALUE = generate();
 
   private TestApiKey() {}
 
-  static void register(DynamicPropertyRegistry registry) {
+  public static void register(DynamicPropertyRegistry registry) {
     registry.add("app.api-key", () -> VALUE);
   }
 

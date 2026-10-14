@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * caller's thread, {@link #deferred()} holds tasks until {@link #runPending()}. Both reject work
  * after shutdown, like a real pool.
  */
-final class TestExecutorService extends AbstractExecutorService {
+public final class TestExecutorService extends AbstractExecutorService {
 
   private final boolean immediate;
   private final Deque<Runnable> pending = new ArrayDeque<>();
@@ -23,15 +23,15 @@ final class TestExecutorService extends AbstractExecutorService {
     this.immediate = immediate;
   }
 
-  static TestExecutorService synchronous() {
+  public static TestExecutorService synchronous() {
     return new TestExecutorService(true);
   }
 
-  static TestExecutorService deferred() {
+  public static TestExecutorService deferred() {
     return new TestExecutorService(false);
   }
 
-  void runPending() {
+  public void runPending() {
     while (!pending.isEmpty()) {
       pending.removeFirst().run();
     }

@@ -1,2 +1,2 @@
-io.github.ianverderame.urlshortener.ProblemErrorReportCustomizer
-io.github.ianverderame.urlshortener.ManagementShutdownConfiguration
+io.github.ianverderame.urlshortener.web.ProblemErrorReportCustomizer
+io.github.ianverderame.urlshortener.management.ManagementShutdownConfiguration
