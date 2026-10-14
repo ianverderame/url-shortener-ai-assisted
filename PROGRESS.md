@@ -4,31 +4,29 @@ Current state for session hand-offs. Full history lives in GitHub Issues and PRs
 
 ## Current
 
-- **Active issue:** #10 wrap-up docs (`issue-10/wrap-up-docs-s1`), docs only. Five new docs in
-  `docs/`; README polished; `reviewer-simulator` passed (6 frictions fixed). Next: review, PR.
+- **Active issue:** none. v1.0 is complete: every PRD (#1) requirement is met or its gap is
+  documented (`docs/requirements-coverage.md`), and `v1.0.0` tags the close-out's (#44) merge
+  commit.
 
 ## Recently completed
 
+- #44 Close-out: this file carried to `main`; `v1.0.0` tagged after merge. A review of `main`
+  against the brief and the PRD found no gaps beyond those already published.
+- #10 Wrap-up (PR #43): engineering summary, AI usage, walkthrough, manual testing guide,
+  requirements coverage; PR template split; early PRs' sign-off record corrected. Accepted risk:
+  README fixes after the `reviewer-simulator` run, and guide steps 6 and 8, not re-run live.
 - #41 Demo page (PR #42): static page at `/`; third freeze exception; relaxes PRD's "no UI" (#1).
-- #39 Review cleanup (PR #40): readability fixes; create's transaction stays (a `503` stores nothing).
 
 ## Up next
 
-- Path to done: #10 only. **Backlog frozen:** new findings go below unless they break an SLO.
-- Future work (#10's limitations; details in `03-ambiguous.md` and the PRs):
-  - #28's click drain and loss-ratio target. Untested: main's 7 s shutdown share, the
-    just-used-connection 2.5 s path, three stats-range details. DB stop/start recovery: manual only.
-  - Manual run: wrong-length code `404` says "No static resource"; OpenAPI problem schema nests
-    `properties`; its `503` omits DB outage. Demo page: no browser test; hard-codes 8081.
-    Performance: guarded, not measured; next step a query-plan (index) test. The PIT job is
-    still named "report-only" though it fails below 85%, and isn't a required check.
-  - #31 form bodies before the key check; test logs `-06:00`; a Flyway timeout; log a replaced
-    exception's type; log capture sees all threads; no Spring Modulith; rate limiting (rejected
-    on #9); click writes autocommit, so `write_failure` can overcount after a hang.
-  - Scaling path (#39): redirect cache; batched click writes; daily stats rollup; shared IT contexts.
+- Nothing scheduled. New work is a fresh decision by the engineer and starts with a new issue.
+- Future work and limitations: `docs/engineering-summary.md` (assumptions, limitations and
+  trade-offs; scaling path and future work) and `docs/requirements-coverage.md` (where coverage
+  is thinner).
 
 ## Carry-forward notes
 
 - `main` is protected; renaming a CI job breaks the required checks. Never lower `mutationThreshold`.
+  The PIT job is still named "report-only" though it fails below 85%, and isn't a required check.
 - New ITs need `TestApiKey` via `@DynamicPropertySource`. Both checkouts share compose project
   `url-shortener`: check `docker ps` first. CSRF stays off only while auth is header-only.
