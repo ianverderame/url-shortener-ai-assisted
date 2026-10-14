@@ -108,13 +108,75 @@ jobs:
           uid=$(docker compose exec -T app id -u)
           echo "app uid: $uid"
           test "$uid" != "0"
-      - name: Clean shutdown via SIGTERM (exit 143, not SIGKILL 137)
+      # Issue #27: shutdown always exits inside the 30s grace period, in every database state.
+      # Scenario names (C1b, C2, C3) match the characterization on #9. Each check restarts the
+      # app, so a prior stop or a paused database never leaks into the next one.
+      - name: Clean shutdown under load, healthy database (C1b)
         run: |
+          api_key="local-demo-key-NOT-A-SECRET-do-not-use-elsewhere"
+          results=$(mktemp)
+          for i in $(seq 1 30); do
+            (
+              out=$(curl -sS --max-time 10 -w '\n%{http_code}' -X POST http://127.0.0.1:8080/api/v1/links \
+                -H "X-API-Key: $api_key" -H 'Content-Type: application/json' \
+                -d "{\"destination\":\"https://example.com/load/c1b/$i\"}" || printf '\n000')
+              status=$(printf '%s\n' "$out" | tail -n 1)
+              code=$(printf '%s\n' "$out" | sed '$d' | sed -n 's/.*"code":"\([0-9A-Za-z]\{8\}\)".*/\1/p')
+              echo "$status $code" >> "$results"
+            ) &
+          done
           id=$(docker compose ps -q app)
           docker compose stop app
+          wait
           code=$(docker inspect "$id" --format '{{.State.ExitCode}}')
           echo "app exit code: $code"
           test "$code" = "143"
+          missing=0
+          for committed in $(awk '$1=="201"{print $2}' "$results"); do
+            found=$(docker compose exec -T postgres psql -U urlshortener -d urlshortener \
+              -tAc "select count(*) from links where code='$committed'")
+            [ "$found" = "1" ] || { echo "missing committed link: $committed"; missing=$((missing + 1)); }
+          done
+          echo "committed links checked: $(wc -l < "$results"), missing: $missing"
+          test "$missing" = "0"
+      - name: Restart the app
+        run: docker compose up -d --wait --wait-timeout 120 app
+      - name: Clean shutdown with the database down, idle (C2)
+        run: |
+          docker compose pause postgres
+          id=$(docker compose ps -q app)
+          start=$(date +%s)
+          docker compose stop app
+          elapsed=$(($(date +%s) - start))
+          code=$(docker inspect "$id" --format '{{.State.ExitCode}}')
+          echo "app exit code: $code, stop took ${elapsed}s"
+          test "$code" = "143"
+          test "$elapsed" -le 15
+      - name: Resume the database and restart the app
+        run: |
+          docker compose unpause postgres
+          sleep 3
+          docker compose up -d --wait --wait-timeout 120 app
+      - name: Clean shutdown with the database down and a request in flight (C3)
+        run: |
+          api_key="local-demo-key-NOT-A-SECRET-do-not-use-elsewhere"
+          docker compose pause postgres
+          curl -sS --max-time 10 -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:8080/api/v1/links \
+            -H "X-API-Key: $api_key" -H 'Content-Type: application/json' \
+            -d '{"destination":"https://example.com/load/c3"}' &
+          sleep 0.1
+          id=$(docker compose ps -q app)
+          start=$(date +%s)
+          docker compose stop app
+          elapsed=$(($(date +%s) - start))
+          wait
+          code=$(docker inspect "$id" --format '{{.State.ExitCode}}')
+          echo "app exit code: $code, stop took ${elapsed}s"
+          test "$code" = "143"
+          test "$elapsed" -le 15
+      - name: Resume the database
+        if: always()
+        run: docker compose unpause postgres || true
       - name: Logs on failure
         if: failure()
         run: docker compose logs --no-color
