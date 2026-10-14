@@ -109,14 +109,6 @@ class LinkServiceTest {
     assertThat(transactions.count).isZero();
   }
 
-  @Test
-  void resolveFindsAStoredLinkByItsExactCode() {
-    Link stored = links.store("Abc12345");
-
-    assertThat(service.resolve("Abc12345")).contains(stored);
-    assertThat(service.resolve("abc12345")).isEmpty();
-  }
-
   private double exhaustions() {
     return meters.get(EXHAUSTION_METRIC).counter().count();
   }

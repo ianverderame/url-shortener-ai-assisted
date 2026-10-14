@@ -104,6 +104,20 @@ class RedirectIT {
     app.get().uri("/" + storedCode).exchange().expectStatus().isNotFound();
   }
 
+  // Codes are case-sensitive: a code differing only in letter case is a different code.
+  @Test
+  void aCodeDifferingOnlyInLetterCaseDoesNotRedirect() {
+    jdbc.sql(
+            "INSERT INTO links (code, destination, created_at) VALUES (:code, :destination, now())")
+        .param("code", "CaSe1234")
+        .param("destination", "https://example.com/")
+        .update();
+
+    app.get().uri("/CaSe1234").exchange().expectStatus().isFound();
+    app.get().uri("/case1234").exchange().expectStatus().isNotFound();
+    app.get().uri("/CASE1234").exchange().expectStatus().isNotFound();
+  }
+
   private String createLink(String destination) {
     AtomicReference<String> code = new AtomicReference<>();
     app.post()

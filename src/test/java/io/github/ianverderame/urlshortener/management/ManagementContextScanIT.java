@@ -42,8 +42,22 @@ class ManagementContextScanIT {
   @Test
   void managementContextConfigurationIsRegisteredInTheManagementContextOnly() {
     // getBeansOfType looks at a context's own beans only, not its parent's.
-    assertThat(capture.managementContext.getBeansOfType(ManagementScanProbe.class)).hasSize(1);
+    assertThat(managementContext().getBeansOfType(ManagementScanProbe.class)).hasSize(1);
     assertThat(mainContext.getBeansOfType(ManagementScanProbe.class)).isEmpty();
+  }
+
+  @Test
+  void managementShutdownConfigurationIsRegisteredInTheManagementContextOnly() {
+    // In the main context, its lifecycleProcessor would replace main's own, cutting main's
+    // shutdown-phase timeout from 7 s to the management context's 3 s (#27).
+    assertThat(managementContext().getBeansOfType(ManagementShutdownConfiguration.class))
+        .hasSize(1);
+    assertThat(mainContext.getBeansOfType(ManagementShutdownConfiguration.class)).isEmpty();
+  }
+
+  private ApplicationContext managementContext() {
+    assertThat(capture.managementContext).as("management context").isNotNull();
+    return capture.managementContext;
   }
 
   /**

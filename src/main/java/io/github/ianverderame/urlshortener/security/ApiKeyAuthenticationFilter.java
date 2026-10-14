@@ -21,7 +21,10 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
   public static final String HEADER = "X-API-Key";
 
-  /** The OpenAPI security scheme that documents {@link #HEADER} on the endpoints needing it. */
+  /**
+   * The name of the OpenAPI security scheme, declared on {@link SecurityConfig}, that documents
+   * {@link #HEADER} on the endpoints needing it.
+   */
   public static final String API_KEY_SCHEME = "apiKey";
 
   private final ApiKey apiKey;

@@ -71,7 +71,13 @@ class LinkCreationCollisionIT {
     double before = exhaustionCount();
 
     generator.willAlwaysReturn("Taken001");
-    ErrorContractIT.assertProblem(create(), 503);
+    ErrorContractIT.assertExactProblem(
+        create(),
+        503,
+        """
+        {"type": "about:blank", "title": "Service Unavailable", "status": 503,
+         "detail": "Could not allocate a short code. Try again.", "instance": "/api/v1/links"}
+        """);
 
     assertThat(exhaustionCount()).isEqualTo(before + 1);
   }

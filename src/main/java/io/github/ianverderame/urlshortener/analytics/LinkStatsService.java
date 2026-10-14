@@ -1,8 +1,8 @@
 package io.github.ianverderame.urlshortener.analytics;
 
 import io.github.ianverderame.urlshortener.link.Link;
+import io.github.ianverderame.urlshortener.link.LinkLookup;
 import io.github.ianverderame.urlshortener.link.LinkNotFoundException;
-import io.github.ianverderame.urlshortener.link.LinkRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -31,11 +31,11 @@ class LinkStatsService {
 
   private static final String TOO_EARLY = "Dates must not be before 0001-01-01.";
 
-  private final LinkRepository links;
+  private final LinkLookup links;
   private final ClickStatsRepository clickStats;
   private final Clock clock;
 
-  LinkStatsService(LinkRepository links, ClickStatsRepository clickStats, Clock clock) {
+  LinkStatsService(LinkLookup links, ClickStatsRepository clickStats, Clock clock) {
     this.links = links;
     this.clickStats = clickStats;
     this.clock = clock;

@@ -2,8 +2,8 @@ package io.github.ianverderame.urlshortener.redirect;
 
 import io.github.ianverderame.urlshortener.analytics.ClickRecorder;
 import io.github.ianverderame.urlshortener.link.Link;
+import io.github.ianverderame.urlshortener.link.LinkLookup;
 import io.github.ianverderame.urlshortener.link.LinkNotFoundException;
-import io.github.ianverderame.urlshortener.link.LinkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,11 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 class RedirectController {
 
-  private final LinkService linkService;
+  private final LinkLookup links;
   private final ClickRecorder clickRecorder;
 
-  RedirectController(LinkService linkService, ClickRecorder clickRecorder) {
-    this.linkService = linkService;
+  RedirectController(LinkLookup links, ClickRecorder clickRecorder) {
+    this.links = links;
     this.clickRecorder = clickRecorder;
   }
 
@@ -51,7 +51,7 @@ class RedirectController {
               mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
               schema = @Schema(implementation = ProblemDetail.class)))
   ResponseEntity<Void> redirect(@PathVariable String code, HttpMethod method) {
-    Link link = linkService.resolve(code).orElseThrow(LinkNotFoundException::new);
+    Link link = links.findByCode(code).orElseThrow(LinkNotFoundException::new);
     if (HttpMethod.GET.equals(method)) {
       clickRecorder.record(link.id());
     }

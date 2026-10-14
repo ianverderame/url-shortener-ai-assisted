@@ -1,5 +1,6 @@
 package io.github.ianverderame.urlshortener.web;
 
+import static io.github.ianverderame.urlshortener.ErrorContractIT.assertExactProblem;
 import static io.github.ianverderame.urlshortener.ErrorContractIT.assertProblem;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,12 +58,17 @@ class RequestBodyLimitIT {
 
   @Test
   void aBodyOverTheCapIsAPayloadTooLargeProblem() {
-    assertProblem(create(TestApiKey.VALUE, validBodyOfSize(CAP + 1)), 413);
+    assertExactProblem(
+        create(TestApiKey.VALUE, validBodyOfSize(CAP + 1)),
+        413,
+        """
+        {"type": "about:blank", "title": "Content Too Large", "status": 413,
+         "detail": "The request body must not exceed 8192 bytes.", "instance": "/api/v1/links"}
+        """);
   }
 
   // A streamed body declares no length, so the cap has to count what arrives. Sent over a raw
-  // socket
-  // because the test client always sends a Content-Length.
+  // socket because the test client always sends a Content-Length.
   @Test
   void aChunkedBodyOverTheCapIsAPayloadTooLargeProblem() throws IOException {
     String body = validBodyOfSize(CAP + 1);

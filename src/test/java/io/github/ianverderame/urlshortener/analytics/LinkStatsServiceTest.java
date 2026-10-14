@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import io.github.ianverderame.urlshortener.link.Link;
+import io.github.ianverderame.urlshortener.link.LinkLookup;
 import io.github.ianverderame.urlshortener.link.LinkNotFoundException;
-import io.github.ianverderame.urlshortener.link.LinkRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -191,7 +191,7 @@ class LinkStatsServiceTest {
 
   record Range(LocalDate from, LocalDate to) {}
 
-  static final class FakeLinks implements LinkRepository {
+  static final class FakeLinks implements LinkLookup {
 
     private final Map<String, Link> byCode = new HashMap<>();
     private long nextId = 1;
@@ -201,11 +201,6 @@ class LinkStatsServiceTest {
       Link link = new Link(nextId++, code, "https://example.com/", NOW);
       byCode.put(code, link);
       return link;
-    }
-
-    @Override
-    public Optional<Link> insertIfCodeFree(String code, String destination, Instant createdAt) {
-      throw new UnsupportedOperationException();
     }
 
     @Override

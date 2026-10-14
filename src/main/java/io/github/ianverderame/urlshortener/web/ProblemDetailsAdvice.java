@@ -1,9 +1,5 @@
 package io.github.ianverderame.urlshortener.web;
 
-import io.github.ianverderame.urlshortener.analytics.InvalidStatsRangeException;
-import io.github.ianverderame.urlshortener.link.CodeGenerationExhaustedException;
-import io.github.ianverderame.urlshortener.link.InvalidDestinationException;
-import io.github.ianverderame.urlshortener.link.LinkNotFoundException;
 import io.github.ianverderame.urlshortener.security.ApiKeyAuthenticationFilter;
 import java.net.URI;
 import org.slf4j.Logger;
@@ -25,9 +21,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 /**
  * The one error contract: every failure is an RFC 7807 problem with type, title, and status. The
- * framework's own exceptions (malformed JSON, 404 route, 405, 415, ...) come from the superclass;
- * the service's own are below. Details are fixed, safe strings: never a submitted URL or a key. The
- * one framework detail that would echo input (a malformed parameter) is overridden below.
+ * framework's own exceptions (malformed JSON, 404 route, 405, 415, ...) come from the superclass,
+ * and so do the service's own: each is a {@link ProblemException} carrying its problem, which the
+ * superclass answers as it does any {@code ErrorResponseException}. Infrastructure failures are
+ * below. Details are fixed, safe strings: never a submitted URL or a key. The one framework detail
+ * that would echo input (a malformed parameter) is overridden below.
  */
 @RestControllerAdvice
 class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
@@ -35,31 +33,6 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
   private static final Logger log = LoggerFactory.getLogger(ProblemDetailsAdvice.class);
 
   private static final URI DEFAULT_TYPE = URI.create("about:blank");
-
-  /** Policy rejections also carry the reason code as a top-level {@code reason} property. */
-  @ExceptionHandler
-  ProblemDetail invalidDestination(InvalidDestinationException e) {
-    ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, e.getMessage());
-    if (e.reason() != null) {
-      problem.setProperty("reason", e.reason().name());
-    }
-    return problem;
-  }
-
-  @ExceptionHandler
-  ProblemDetail linkNotFound(LinkNotFoundException e) {
-    return problem(HttpStatus.NOT_FOUND, e.getMessage());
-  }
-
-  @ExceptionHandler
-  ProblemDetail invalidStatsRange(InvalidStatsRangeException e) {
-    return problem(HttpStatus.BAD_REQUEST, e.getMessage());
-  }
-
-  @ExceptionHandler
-  ProblemDetail codeGenerationExhausted(CodeGenerationExhaustedException e) {
-    return problem(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
-  }
 
   /**
    * The database is down or hung (decided on #9): a 503 within the pool and socket timeouts. A
@@ -78,11 +51,6 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
     log.warn("Database unavailable: answered 503 ({})", e.getClass().getSimpleName());
     return problem(
         HttpStatus.SERVICE_UNAVAILABLE, "The service is temporarily unavailable. Try again.");
-  }
-
-  @ExceptionHandler
-  ProblemDetail requestBodyTooLarge(RequestBodyTooLargeException e) {
-    return problem(HttpStatus.CONTENT_TOO_LARGE, e.getMessage());
   }
 
   @ExceptionHandler

@@ -1,5 +1,8 @@
 package io.github.ianverderame.urlshortener.security;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +25,16 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
  * matrix parameters the way Spring MVC routing does, so no spelling of an API path skips the key
  * check. A 401 is handed to the MVC exception resolvers, so it gets the same problem response as
  * every other error.
+ *
+ * <p>The API key is also documented here as an OpenAPI security scheme; endpoints that need the key
+ * reference it by {@link ApiKeyAuthenticationFilter#API_KEY_SCHEME}.
  */
 @Configuration(proxyBeanMethods = false)
+@SecurityScheme(
+    name = ApiKeyAuthenticationFilter.API_KEY_SCHEME,
+    type = SecuritySchemeType.APIKEY,
+    in = SecuritySchemeIn.HEADER,
+    paramName = ApiKeyAuthenticationFilter.HEADER)
 class SecurityConfig {
 
   @Bean

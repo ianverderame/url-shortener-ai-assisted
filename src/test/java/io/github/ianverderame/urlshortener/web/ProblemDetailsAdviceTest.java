@@ -2,11 +2,7 @@ package io.github.ianverderame.urlshortener.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.github.ianverderame.urlshortener.analytics.InvalidStatsRangeException;
-import io.github.ianverderame.urlshortener.link.CodeGenerationExhaustedException;
-import io.github.ianverderame.urlshortener.link.InvalidDestinationException;
-import io.github.ianverderame.urlshortener.link.LinkNotFoundException;
-import io.github.ianverderame.urlshortener.link.RejectionReason;
+import io.github.ianverderame.urlshortener.ProblemExceptionAssertions;
 import java.net.URI;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -24,9 +20,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.context.request.ServletWebRequest;
 
 /**
- * The error contract's mapping, called directly: each of the service's own exceptions becomes a
- * problem with its status, a type, and its fixed detail, and framework problems get a type filled
- * in. That the advice is wired and serialized as RFC 7807 JSON is covered by the integration tests.
+ * The error contract's mapping, called directly: a {@link ProblemException} is answered with its
+ * own problem, infrastructure and framework failures get their status, a type, and a fixed detail,
+ * and framework problems get a type filled in. Each feature's own problems are tested in its
+ * package. That the advice is wired and serialized as RFC 7807 JSON is covered by the integration
+ * tests.
  */
 class ProblemDetailsAdviceTest {
 
@@ -35,46 +33,23 @@ class ProblemDetailsAdviceTest {
   private final ProblemDetailsAdvice advice = new ProblemDetailsAdvice();
 
   @Test
-  void aPolicyRejectionIsABadRequestCarryingItsReason() {
-    ProblemDetail problem =
-        advice.invalidDestination(
-            new InvalidDestinationException(RejectionReason.UNSUPPORTED_SCHEME));
+  void aProblemExceptionIsAnsweredWithItsOwnStatusAndProblem() throws Exception {
+    RequestBodyTooLargeException e = new RequestBodyTooLargeException(8192);
 
-    assertProblem(problem, HttpStatus.BAD_REQUEST, RejectionReason.UNSUPPORTED_SCHEME.detail());
-    assertThat(problem.getProperties()).containsEntry("reason", "UNSUPPORTED_SCHEME");
+    ResponseEntity<Object> response =
+        advice.handleException(e, new ServletWebRequest(new MockHttpServletRequest()));
+
+    assertThat(response).isNotNull();
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONTENT_TOO_LARGE);
+    assertThat(response.getBody()).isSameAs(e.getBody());
   }
 
   @Test
-  void aRequestShapeRejectionIsABadRequestWithoutAReason() {
-    ProblemDetail problem =
-        advice.invalidDestination(new InvalidDestinationException("A destination is required."));
-
-    assertProblem(problem, HttpStatus.BAD_REQUEST, "A destination is required.");
-    assertThat(problem.getProperties()).isNullOrEmpty();
-  }
-
-  @Test
-  void anUnknownLinkIsNotFound() {
-    assertProblem(
-        advice.linkNotFound(new LinkNotFoundException()),
-        HttpStatus.NOT_FOUND,
-        "No link has this code.");
-  }
-
-  @Test
-  void anInvalidStatsRangeIsABadRequestWithItsMessage() {
-    assertProblem(
-        advice.invalidStatsRange(new InvalidStatsRangeException("'from' must not be after 'to'.")),
-        HttpStatus.BAD_REQUEST,
-        "'from' must not be after 'to'.");
-  }
-
-  @Test
-  void exhaustedCodeGenerationIsServiceUnavailable() {
-    assertProblem(
-        advice.codeGenerationExhausted(new CodeGenerationExhaustedException()),
-        HttpStatus.SERVICE_UNAVAILABLE,
-        "Could not allocate a short code. Try again.");
+  void anOversizedBodyIsContentTooLargeNamingTheCapButNotTheBody() {
+    ProblemExceptionAssertions.assertProblem(
+        new RequestBodyTooLargeException(8192),
+        HttpStatus.CONTENT_TOO_LARGE,
+        "The request body must not exceed 8192 bytes.");
   }
 
   @Test
@@ -99,14 +74,6 @@ class ProblemDetailsAdviceTest {
         .contains("Database unavailable")
         .contains("CannotGetJdbcConnectionException")
         .doesNotContain("db.internal");
-  }
-
-  @Test
-  void anOversizedBodyIsPayloadTooLargeNamingTheCapButNotTheBody() {
-    assertProblem(
-        advice.requestBodyTooLarge(new RequestBodyTooLargeException(8192)),
-        HttpStatus.CONTENT_TOO_LARGE,
-        "The request body must not exceed 8192 bytes.");
   }
 
   @Test

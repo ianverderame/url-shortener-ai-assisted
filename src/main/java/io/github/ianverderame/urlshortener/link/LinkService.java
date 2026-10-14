@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionOperations;
 
 @Service
-public class LinkService {
+class LinkService {
 
   private static final Logger log = LoggerFactory.getLogger(LinkService.class);
 
@@ -66,9 +66,5 @@ public class LinkService {
     }
     exhaustionCounter.increment();
     throw new CodeGenerationExhaustedException();
-  }
-
-  public Optional<Link> resolve(String code) {
-    return links.findByCode(code);
   }
 }

@@ -2,13 +2,10 @@ package io.github.ianverderame.urlshortener.link;
 
 import io.github.ianverderame.urlshortener.security.ApiKeyAuthenticationFilter;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -21,11 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 /** The OpenAPI annotations describe its responses; they don't change them. */
 @RestController
 @RequestMapping("/api/v1/links")
-@SecurityScheme(
-    name = ApiKeyAuthenticationFilter.API_KEY_SCHEME,
-    type = SecuritySchemeType.APIKEY,
-    in = SecuritySchemeIn.HEADER,
-    paramName = ApiKeyAuthenticationFilter.HEADER)
 class LinkController {
 
   private final LinkService linkService;

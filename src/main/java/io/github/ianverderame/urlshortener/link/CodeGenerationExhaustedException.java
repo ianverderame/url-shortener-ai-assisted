@@ -1,11 +1,14 @@
 package io.github.ianverderame.urlshortener.link;
 
+import io.github.ianverderame.urlshortener.web.ProblemException;
+import org.springframework.http.HttpStatus;
+
 /** Every attempt to insert a link under a fresh short code hit an existing code. */
-public class CodeGenerationExhaustedException extends RuntimeException {
+class CodeGenerationExhaustedException extends ProblemException {
 
   private static final long serialVersionUID = 1L;
 
-  public CodeGenerationExhaustedException() {
-    super("Could not allocate a short code. Try again.");
+  CodeGenerationExhaustedException() {
+    super(HttpStatus.SERVICE_UNAVAILABLE, "Could not allocate a short code. Try again.");
   }
 }

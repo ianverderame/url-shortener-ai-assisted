@@ -5,7 +5,7 @@ package io.github.ianverderame.urlshortener.link;
  * several rules, the first one listed here is reported. Details are fixed, safe strings that never
  * contain the submitted URL.
  */
-public enum RejectionReason {
+enum RejectionReason {
   TOO_LONG("Destination must be at most 2048 characters."),
   WHITESPACE_OR_CONTROL("Destination must not contain whitespace, control or format characters."),
   UNSUPPORTED_SCHEME("Destination scheme must be http or https."),
@@ -21,7 +21,7 @@ public enum RejectionReason {
     this.detail = detail;
   }
 
-  public String detail() {
+  String detail() {
     return detail;
   }
 }

@@ -16,7 +16,8 @@ Requirements: the PRD (GitHub issue #1). Work items: GitHub Issues. Current stat
   them. Tests mirror these packages; cross-cutting ITs and shared test support stay at the root.
 - Persistence: plain JDBC (`JdbcClient`), not JPA. Flyway migrations are additive only.
 - Time: UTC everywhere (JVM, container, SQL). Inject a `Clock`; never sleep in tests.
-- Errors: RFC 7807 problem responses for every failure.
+- Errors: RFC 7807 problem responses for every failure. The service's own errors extend
+  `web.ProblemException` (a status and a fixed, safe detail) and need no handler of their own.
 
 ## Rules
 

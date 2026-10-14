@@ -1,11 +1,13 @@
 package io.github.ianverderame.urlshortener.web;
 
-/** A request body over the cap. The message names the cap, never anything from the body. */
-class RequestBodyTooLargeException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+/** A request body over the cap: a 413 whose detail names the cap, never anything from the body. */
+class RequestBodyTooLargeException extends ProblemException {
 
   private static final long serialVersionUID = 1L;
 
   RequestBodyTooLargeException(int maxBytes) {
-    super("The request body must not exceed " + maxBytes + " bytes.");
+    super(HttpStatus.CONTENT_TOO_LARGE, "The request body must not exceed " + maxBytes + " bytes.");
   }
 }
