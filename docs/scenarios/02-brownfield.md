@@ -43,7 +43,7 @@ finding and how it was triaged.
 - **Red for the right reason.** Where a new test first failed only because a bean was missing,
   the wiring was added and the test re-run until it failed on the behavior itself (no click
   stored; stats route returning 404), and only then was the behavior implemented.
-- **Tests that pass at once were checked by breaking the code.** The resilience tests cover
+- **Tests that passed at once were checked by breaking the code.** The resilience tests cover
   behavior that already existed, so the recorder was sabotaged twice: writing on the request
   thread made the latch-blocked redirect hang (caught by the hang backstop), and not catching
   write failures turned the redirect into a 500. Both were reverted.
@@ -59,7 +59,7 @@ finding and how it was triaged.
   During #8, the new stats wiring pushed the score down to 83%. The threshold was not lowered or
   scoped down: the engineer chose to unit-test the error contract's mapping (`ProblemDetailsAdvice`),
   which killed all 13 of its mutations and brought the score to 89%.
-- **Deterministic tests for asynchronous behavior.** The PRD forbids wall-clock tests. The click
+- **Deterministic tests for asynchronous behavior.** The PRD forbids tests that depend on timing for correctness. The click
   recorder is tested with a synchronous or deferred executor, and with a real bounded pool held
   on a latch: overflow and shutdown losses are counted exactly, with no sleeps. The performance
   guard holds the recorder's only worker on a latch and requires the redirect to stay `302`; its
