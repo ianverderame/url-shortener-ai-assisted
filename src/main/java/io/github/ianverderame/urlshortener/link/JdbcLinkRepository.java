@@ -16,7 +16,10 @@ class JdbcLinkRepository implements LinkRepository {
     this.jdbcClient = jdbcClient;
   }
 
-  /** A taken code is an empty {@code RETURNING}, not an exception, so no transaction is spoiled. */
+  /**
+   * A taken code is an empty {@code RETURNING}, not an exception, so the caller's transaction is
+   * not spoiled and it can retry with another code.
+   */
   @Override
   public Optional<Link> insertIfCodeFree(String code, String destination, Instant createdAt) {
     return jdbcClient

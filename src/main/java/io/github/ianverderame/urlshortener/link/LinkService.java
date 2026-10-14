@@ -47,9 +47,15 @@ class LinkService {
   }
 
   /**
-   * Inserts the link under a fresh code, storing the policy's normalized destination. Each attempt
-   * runs in its own transaction, and only a code conflict (the code is already taken) leads to
-   * another attempt.
+   * Inserts the link under a fresh code, storing the policy's normalized destination. Only a code
+   * conflict (the code is already taken) leads to another attempt.
+   *
+   * <p>Each attempt runs in its own transaction even though it is a single statement, so that a
+   * {@code 503} stores nothing. If the database hangs after the INSERT is sent, the socket timeout
+   * gives up on it; when the database resumes, an autocommitted INSERT would still run and commit,
+   * storing a link the client was told failed. Inside a transaction the INSERT waits for a COMMIT
+   * that never comes, and the server rolls it back once it sees the connection is gone. (#39
+   * considered removing the transaction and kept it for this reason.)
    */
   Link create(String submitted) {
     String destination = destinationPolicy.normalize(submitted);
