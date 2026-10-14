@@ -47,7 +47,10 @@ public class ClickRecorder {
     }
   }
 
-  /** Stops the executor without draining it; graceful drain is #9. Unrun clicks are counted. */
+  /**
+   * Stops the executor without draining it (the drain, #28, was descoped). Each unrun click is
+   * counted under {@code reason=shutdown}.
+   */
   void shutdown() {
     int unrun = executor.shutdownNow().size();
     shutdown.increment(unrun);

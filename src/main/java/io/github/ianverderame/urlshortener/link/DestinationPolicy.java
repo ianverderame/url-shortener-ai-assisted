@@ -195,10 +195,11 @@ class DestinationPolicy {
       return true;
     }
     String port = suffix.substring(1);
-    return isCanonicalNumber(port)
-        && port.length() <= 5
-        && Integer.parseInt(port) >= 1
-        && Integer.parseInt(port) <= MAX_PORT;
+    if (!isCanonicalNumber(port) || port.length() > 5) {
+      return false;
+    }
+    int number = Integer.parseInt(port);
+    return number >= 1 && number <= MAX_PORT;
   }
 
   /** Decimal digits with no leading zero (a lone "0" is allowed). */

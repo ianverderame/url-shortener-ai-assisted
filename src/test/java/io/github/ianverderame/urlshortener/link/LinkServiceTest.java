@@ -155,7 +155,9 @@ class LinkServiceTest {
 
     @Override
     public Optional<Link> insertIfCodeFree(String code, String destination, Instant createdAt) {
-      assertThat(transactions.active).as("insert runs inside a transaction").isTrue();
+      assertThat(transactions.active)
+          .as("insert runs inside a transaction, so a 503 stores nothing (LinkService.create)")
+          .isTrue();
       if (failNextInsert) {
         failNextInsert = false;
         throw new DataAccessResourceFailureException("database unavailable");

@@ -1,6 +1,5 @@
 #!/bin/sh
 # End-to-end smoke test, run inside the compose network: `docker compose run --rm smoke`.
-# Later slices add their flows here.
 set -eu
 
 APP_URL="${APP_URL:-http://app:8080}"
