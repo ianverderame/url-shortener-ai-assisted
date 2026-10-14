@@ -3,7 +3,6 @@ package io.github.ianverderame.urlshortener;
 import org.springframework.boot.actuate.autoconfigure.web.ManagementContextConfiguration;
 import org.springframework.boot.actuate.autoconfigure.web.ManagementContextType;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.support.DefaultLifecycleProcessor;
 
 /**
@@ -20,7 +19,6 @@ import org.springframework.context.support.DefaultLifecycleProcessor;
  * doesn't share the main context's bean definitions.
  */
 @ManagementContextConfiguration(ManagementContextType.CHILD)
-@Conditional(OnChildApplicationContextCondition.class)
 class ManagementShutdownConfiguration {
 
   static final long MANAGEMENT_SHUTDOWN_TIMEOUT_MS = 3000;
