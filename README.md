@@ -21,7 +21,7 @@ This starts PostgreSQL and the app. The app waits for the database, then becomes
 
 | Port | What | Reachable from |
 |---|---|---|
-| `8080` | Application API and interactive docs (`/swagger-ui/index.html`) | `127.0.0.1` only |
+| `8080` | Application API, demo page (`/`), and interactive docs (`/swagger-ui/index.html`) | `127.0.0.1` only |
 | `8081` | Health (`/actuator/health/readiness`, `/actuator/health/liveness`) and metrics (`/actuator/metrics`), no key needed | `127.0.0.1` only |
 
 PostgreSQL is not published to your machine.
@@ -39,6 +39,16 @@ follows it (`302` to the destination, `Cache-Control: no-store`), and reads the 
 they show that one click (recording is asynchronous, so it polls up to 20 times, half a second
 apart). It also checks that a destination with user information is rejected with `400`, and that
 an unknown code returns `404`. It prints `SMOKE PASS` and exits 0 when all of that holds.
+
+### Demo page
+
+Open <http://127.0.0.1:8080/> and paste the demo key
+(`local-demo-key-NOT-A-SECRET-do-not-use-elsewhere`) into the key field. From there you can
+shorten a URL, follow the short link, read its click stats, and trigger the `401`, `400` and `404`
+problem responses. It also links to the interactive docs, readiness and metrics. The page is one
+static file (`src/main/resources/static/index.html`) on the same origin as the API. It never
+contains a key itself, and keeps the pasted key in memory only: no cookies or browser storage
+(your browser may still offer to save it as a password) (#41).
 
 ### Try it
 
