@@ -48,7 +48,7 @@ services:
 
   # One-shot end-to-end check: `docker compose run --rm smoke`. Not started by `up`.
   smoke:
-    image: curlimages/curl:8.22.0
+    image: curlimages/curl:8.23.0
     profiles: ["smoke"]
     depends_on:
       app:
