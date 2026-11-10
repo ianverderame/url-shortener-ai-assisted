@@ -1,6 +1,6 @@
 # Build stage: compile and package with the Maven wrapper. Tests run in CI (./mvnw verify), not
 # here, because the integration tests need Docker themselves.
-FROM eclipse-temurin:21.0.12.1_1-jdk-noble AS build
+FROM eclipse-temurin:21.0.13_9-jdk-noble AS build
 # The wrapper verifies the SHA-256 of the Maven .zip; without unzip it would fetch the .tar.gz
 # instead, whose checksum differs. Build stage only; the runtime image doesn't get it.
 RUN apt-get update \
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 \
     && java -Djarmode=tools -jar application.jar extract --layers --destination extracted
 
 # Runtime stage: JRE only, non-root, layered for cache-friendly rebuilds.
-FROM eclipse-temurin:21.0.12.1_1-jre-noble
+FROM eclipse-temurin:21.0.13_9-jre-noble
 RUN groupadd --system app && useradd --system --gid app --no-create-home --shell /usr/sbin/nologin app
 WORKDIR /application
 COPY --from=build /workspace/extracted/dependencies/ ./
