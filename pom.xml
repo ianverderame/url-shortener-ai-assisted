@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.1</version>
+		<version>4.1.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>io.github.ianverderame</groupId>
@@ -52,7 +52,7 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>3.1.1</version>
+			<version>3.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -132,11 +132,11 @@
 			<plugin>
 				<groupId>com.diffplug.spotless</groupId>
 				<artifactId>spotless-maven-plugin</artifactId>
-				<version>3.10.4</version>
+				<version>3.11.0</version>
 				<configuration>
 					<java>
 						<googleJavaFormat>
-							<!-- 1.37.0 fails inside Spotless 3.10.4 (InvocationTargetException on
+							<!-- 1.37.0 fails inside Spotless 3.11.0 (InvocationTargetException on
 							     every file); 1.36.1 is the newest that works with it. -->
 							<version>1.36.1</version>
 						</googleJavaFormat>
@@ -155,7 +155,7 @@
 			<plugin>
 				<groupId>org.pitest</groupId>
 				<artifactId>pitest-maven</artifactId>
-				<version>1.30.0</version>
+				<version>1.30.2</version>
 				<dependencies>
 					<dependency>
 						<groupId>org.pitest</groupId>
